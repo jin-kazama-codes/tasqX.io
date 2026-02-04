@@ -42,6 +42,56 @@ const Comments: React.FC<{ issue: IssueType }> = ({ issue }) => {
     }
   }, [isWritingComment]);
 
+  // Handle paste event for clipboard images (Ctrl+V)
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      if (!isWritingComment) return;
+
+      const clipboardItems = e.clipboardData?.items;
+      if (!clipboardItems) return;
+
+      const imageFiles: File[] = [];
+
+      for (let i = 0; i < clipboardItems.length; i++) {
+        const item = clipboardItems[i];
+        if (item && item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) {
+            // Create a named file from the clipboard blob
+            const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+            const extension = file.type.split("/")[1] || "png";
+            const namedFile = new File([file], `screenshot-${timestamp}.${extension}`, {
+              type: file.type,
+            });
+            imageFiles.push(namedFile);
+          }
+        }
+      }
+
+      if (imageFiles.length > 0) {
+        e.preventDefault(); // Prevent default paste behavior for images
+
+        const allFiles = [...(image || []), ...imageFiles];
+
+        if (allFiles.length > 5) {
+          alert("You can upload up to 5 files.");
+          return;
+        }
+
+        setImage(allFiles);
+
+        // Upload the pasted images
+        const fakeEvent = { target: { files: imageFiles } } as unknown as React.ChangeEvent<HTMLInputElement>;
+        await handleImageUpload(fakeEvent, imageFiles);
+      }
+    };
+
+    document.addEventListener("paste", handlePaste);
+    return () => {
+      document.removeEventListener("paste", handlePaste);
+    };
+  }, [isWritingComment, image]);
+
   const handleButtonClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click(); // Trigger file input click
