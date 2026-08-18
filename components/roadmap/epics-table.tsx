@@ -90,15 +90,20 @@ const EpicsTable: React.FC = () => {
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400">
             <HiOutlineBolt className="h-4 w-4" />
           </div>
-          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-            Roadmap Timeline
-          </span>
+          <div>
+            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800 dark:text-slate-100">
+              6-Month Roadmap Timeline
+            </span>
+            <span className="ml-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+              (Sep 2026 – Feb 2027)
+            </span>
+          </div>
         </div>
 
         {/* Controls: View switch & New Epic */}
         <div className="flex items-center gap-2.5">
           <div className="inline-flex rounded-xl bg-slate-200/70 dark:bg-surface-overlay-d p-0.5">
-            {(["weeks", "months", "quarters"] as ViewMode[]).map((mode) => (
+            {(["months", "weeks", "quarters"] as ViewMode[]).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
@@ -159,7 +164,7 @@ const RoadmapTimeline: React.FC<{
   handleCreateIssue: (props: any) => void;
 }> = ({ viewMode, handleCreateIssue }) => {
   const [creationParent, setCreationParent] = useState<string | null>(null);
-  const { setIssueKey, issueKey: selectedIssueKey } = useSelectedIssueContext();
+  const { setIssueKey } = useSelectedIssueContext();
   const { issues, isCreating } = useIssues();
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
 
@@ -168,41 +173,33 @@ const RoadmapTimeline: React.FC<{
     [issues]
   );
 
-  // Define Timeline Columns
+  // Full 6-Month Timeline Columns
   const timeColumns = useMemo(() => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-
     if (viewMode === "weeks") {
       return [
-        "W1 (Aug)",
-        "W2 (Aug)",
-        "W3 (Aug)",
-        "W4 (Aug)",
-        "W1 (Sep)",
-        "W2 (Sep)",
-        "W3 (Sep)",
-        "W4 (Sep)",
+        "M1 W1", "M1 W2", "M1 W3", "M1 W4",
+        "M2 W1", "M2 W2", "M2 W3", "M2 W4",
+        "M3 W1", "M3 W2", "M3 W3", "M3 W4",
+        "M4 W1", "M4 W2", "M4 W3", "M4 W4",
+        "M5 W1", "M5 W2", "M5 W3", "M5 W4",
+        "M6 W1", "M6 W2", "M6 W3", "M6 W4",
       ];
     }
     if (viewMode === "quarters") {
       return [
-        `Q1 ${currentYear}`,
-        `Q2 ${currentYear}`,
-        `Q3 ${currentYear}`,
-        `Q4 ${currentYear}`,
-        `Q1 ${currentYear + 1}`,
+        "Q3 2026 (M1-M2)",
+        "Q4 2026 (M3-M4)",
+        "Q1 2027 (M5-M6)",
       ];
     }
-    // Default: Months
+    // Default: Complete 6 Delivery Months
     return [
-      "Jul 2026",
-      "Aug 2026",
-      "Sep 2026",
-      "Oct 2026",
-      "Nov 2026",
-      "Dec 2026",
-      "Jan 2027",
+      "Month 1 (Sep 2026)",
+      "Month 2 (Oct 2026)",
+      "Month 3 (Nov 2026)",
+      "Month 4 (Dec 2026)",
+      "Month 5 (Jan 2027)",
+      "Month 6 (Feb 2027)",
     ];
   }, [viewMode]);
 
@@ -221,21 +218,66 @@ const RoadmapTimeline: React.FC<{
     };
   };
 
-  // Helper to generate consistent Gantt bar span for each Epic
-  const getGanttBarStyle = (index: number, percent: number) => {
-    if (viewMode === "weeks") {
-      const left = index === 0 ? "12%" : "36%";
-      const width = index === 0 ? "48%" : "52%";
-      return { left, width };
+  // Dynamic calculation for Epic Gantt bar across the 6 Months
+  const getEpicGanttSpan = (children: IssueType[]) => {
+    const totalCols = timeColumns.length;
+    if (children.length === 0) {
+      return { left: "1%", width: `${(2 / totalCols) * 98}%`, startMonth: 1, endMonth: 2 };
     }
+
+    const months = children.map((c) => c.month || 1).filter(Boolean);
+    const minMonth = Math.min(...months);
+    const maxMonth = Math.max(...months);
+
+    if (viewMode === "months") {
+      const startIdx = Math.max(0, minMonth - 1);
+      const span = Math.max(1, maxMonth - minMonth + 1);
+      const left = `${(startIdx / 6) * 100 + 0.6}%`;
+      const width = `${(span / 6) * 100 - 1.2}%`;
+      return { left, width, startMonth: minMonth, endMonth: maxMonth };
+    }
+
     if (viewMode === "quarters") {
-      const left = index === 0 ? "40%" : "55%";
-      const width = index === 0 ? "35%" : "30%";
+      const qStart = Math.floor((minMonth - 1) / 2);
+      const qEnd = Math.floor((maxMonth - 1) / 2);
+      const qSpan = Math.max(1, qEnd - qStart + 1);
+      const left = `${(qStart / 3) * 100 + 1}%`;
+      const width = `${(qSpan / 3) * 100 - 2}%`;
+      return { left, width, startMonth: minMonth, endMonth: maxMonth };
+    }
+
+    // Weeks mode (24 weeks total)
+    const wStart = (minMonth - 1) * 4;
+    const wEnd = maxMonth * 4;
+    const wSpan = wEnd - wStart;
+    const left = `${(wStart / 24) * 100 + 0.5}%`;
+    const width = `${(wSpan / 24) * 100 - 1}%`;
+    return { left, width, startMonth: minMonth, endMonth: maxMonth };
+  };
+
+  // Dynamic calculation for single child Story mini-bar
+  const getStoryGanttSpan = (story: IssueType) => {
+    const storyMonth = story.month || 1;
+
+    if (viewMode === "months") {
+      const startIdx = Math.max(0, storyMonth - 1);
+      const left = `${(startIdx / 6) * 100 + 1}%`;
+      const width = `${(1 / 6) * 100 - 2}%`;
       return { left, width };
     }
-    // Months view
-    const left = index === 0 ? "14%" : "28%";
-    const width = index === 0 ? "42%" : "48%";
+
+    if (viewMode === "quarters") {
+      const qIdx = Math.floor((storyMonth - 1) / 2);
+      const offsetInQ = (storyMonth - 1) % 2;
+      const left = `${(qIdx / 3) * 100 + (offsetInQ === 0 ? 1 : 17)}%`;
+      const width = `15%`;
+      return { left, width };
+    }
+
+    // Weeks mode
+    const wIdx = (storyMonth - 1) * 4 + 1;
+    const left = `${(wIdx / 24) * 100 + 0.5}%`;
+    const width = `${(2 / 24) * 100}%`;
     return { left, width };
   };
 
@@ -249,32 +291,32 @@ const RoadmapTimeline: React.FC<{
           No Epics on Roadmap
         </h3>
         <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1">
-          Create an Epic to schedule milestones, visualize delivery dates, and track completion progress across months.
+          Create an Epic to schedule milestones and track delivery dates across the 6-month roadmap.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="min-w-[800px] flex flex-col">
-      {/* Timeline Grid Header */}
-      <div className="flex border-b border-slate-100 dark:border-surface-border-d bg-slate-50/50 dark:bg-surface-overlay-d/40 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider sticky top-0 z-10">
+    <div className="min-w-[1000px] flex flex-col">
+      {/* Timeline Grid Header (All 6 Months) */}
+      <div className="flex border-b border-slate-100 dark:border-surface-border-d bg-slate-50/80 dark:bg-surface-overlay-d/80 text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider sticky top-0 z-10 backdrop-blur-md">
         {/* Left column header: Epics list */}
-        <div className="w-[360px] shrink-0 px-5 py-3 border-r border-slate-100 dark:border-surface-border-d flex items-center justify-between">
+        <div className="w-[360px] shrink-0 px-5 py-3 border-r border-slate-200/80 dark:border-surface-border-d flex items-center justify-between">
           <span>Epics & Deliverables</span>
-          <span className="text-[10px] font-normal text-slate-400">
+          <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-surface-overlay-d px-2 py-0.5 rounded-md">
             {epicsList.length} epics
           </span>
         </div>
 
-        {/* Right column header: Timeline columns */}
+        {/* Right column header: Timeline columns (All 6 Months) */}
         <div className="flex-1 grid grid-flow-col auto-cols-fr">
           {timeColumns.map((col, idx) => (
             <div
               key={col}
               className={clsx(
-                "px-3 py-3 text-center border-r border-slate-100 dark:border-surface-border-d/60",
-                idx === 1 && "bg-brand-500/5 text-brand-600 dark:text-brand-400 font-extrabold"
+                "px-2 py-3 text-center border-r border-slate-200/60 dark:border-surface-border-d/60 truncate font-bold text-[11px]",
+                idx === 0 && "bg-brand-500/10 text-brand-600 dark:text-brand-400 font-extrabold"
               )}
             >
               {col}
@@ -290,10 +332,13 @@ const RoadmapTimeline: React.FC<{
         type="multiple"
         className="divide-y divide-slate-100 dark:divide-surface-border-d"
       >
-        {epicsList.map((epic, index) => {
+        {epicsList.map((epic) => {
           const { percent, completed, total } = calculateProgress(epic.id);
           const children = getEpicChildren(epic.id);
-          const barStyle = getGanttBarStyle(index, percent);
+          const { left, width, startMonth, endMonth } = getEpicGanttSpan(children);
+
+          const isRND = epic.budgetTrack === "R&D";
+          const isINF = epic.budgetTrack === "Infrastructure";
 
           return (
             <AccordionItem
@@ -315,7 +360,16 @@ const RoadmapTimeline: React.FC<{
                       onClick={() => setIssueKey(epic.key)}
                     >
                       <IssueIcon issueType="EPIC" />
-                      <span className="font-mono text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-500/20 shrink-0">
+                      <span
+                        className={clsx(
+                          "font-mono text-[10px] font-extrabold px-1.5 py-0.5 rounded border shrink-0",
+                          isRND
+                            ? "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/10 dark:text-purple-300"
+                            : isINF
+                            ? "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:text-sky-300"
+                            : "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-300"
+                        )}
+                      >
                         {epic.key}
                       </span>
                       <span className="truncate text-xs font-bold text-slate-800 dark:text-slate-100 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
@@ -324,16 +378,23 @@ const RoadmapTimeline: React.FC<{
                     </div>
                   </div>
 
-                  <IssueSelectStatus
-                    key={epic.id + epic.status}
-                    currentStatus={epic.status}
-                    issueId={epic.id}
-                    variant="sm"
-                  />
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {epic.budget ? (
+                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-surface-overlay-d px-1.5 py-0.5 rounded">
+                        £{(epic.budget / 1000).toFixed(0)}k
+                      </span>
+                    ) : null}
+                    <IssueSelectStatus
+                      key={epic.id + epic.status}
+                      currentStatus={epic.status}
+                      issueId={epic.id}
+                      variant="sm"
+                    />
+                  </div>
                 </div>
 
-                {/* Right Gantt Bar Area */}
-                <div className="flex-1 relative h-14 flex items-center px-4">
+                {/* Right Gantt Bar Area (Accurate 6-Month Span) */}
+                <div className="flex-1 relative h-14 flex items-center px-2">
                   {/* Background grid vertical lines */}
                   <div className="absolute inset-0 grid grid-flow-col auto-cols-fr pointer-events-none">
                     {timeColumns.map((col, idx) => (
@@ -341,25 +402,37 @@ const RoadmapTimeline: React.FC<{
                         key={col}
                         className={clsx(
                           "border-r border-slate-100/70 dark:border-surface-border-d/40 h-full",
-                          idx === 1 && "bg-brand-500/[0.03]"
+                          idx === 0 && "bg-brand-500/[0.02]"
                         )}
                       />
                     ))}
                   </div>
 
-                  {/* Gantt Timeline Bar */}
+                  {/* Gantt Timeline Bar accurately spanning startMonth to endMonth */}
                   <div
                     onClick={() => setIssueKey(epic.key)}
-                    style={{ left: barStyle.left, width: barStyle.width }}
-                    className="absolute h-7 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-sm flex items-center justify-between px-3 cursor-pointer hover:shadow-glow-sm transition-all duration-150 group/bar z-1"
+                    style={{ left, width }}
+                    className={clsx(
+                      "absolute h-7 rounded-xl text-white shadow-sm flex items-center justify-between px-3 cursor-pointer hover:shadow-glow-sm transition-all duration-150 group/bar z-1",
+                      isRND
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600"
+                        : isINF
+                        ? "bg-gradient-to-r from-sky-600 to-teal-600"
+                        : "bg-gradient-to-r from-indigo-600 to-violet-600"
+                    )}
                   >
-                    <span className="truncate text-[11px] font-bold text-white drop-shadow-xs">
-                      {epic.name}
-                    </span>
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="truncate text-[11px] font-bold text-white drop-shadow-xs">
+                        {epic.name}
+                      </span>
+                      <span className="text-[9px] font-medium text-white/80 shrink-0">
+                        (M{startMonth}–M{endMonth})
+                      </span>
+                    </div>
 
                     {total > 0 ? (
                       <span className="text-[10px] font-extrabold bg-white/20 px-1.5 py-0.5 rounded-md shrink-0 ml-2">
-                        {percent}%
+                        {completed}/{total} ({percent}%)
                       </span>
                     ) : (
                       <span className="text-[10px] font-medium text-white/80 shrink-0 ml-2">
@@ -378,74 +451,89 @@ const RoadmapTimeline: React.FC<{
                 </div>
               </div>
 
-              {/* Expandable Child Tasks inside Epic */}
+              {/* Expandable Child Stories inside Epic */}
               <AccordionContent className="border-t border-slate-100 dark:border-surface-border-d bg-slate-50/30 dark:bg-surface-overlay-d/10 p-0">
                 {children.length === 0 ? (
                   <div className="py-2.5 px-12 text-xs text-slate-400">
-                    No linked tasks or stories.
+                    No linked stories or tasks.
                   </div>
                 ) : (
-                  children.map((child, cIdx) => (
-                    <div
-                      key={child.id}
-                      className="flex items-center border-t border-slate-100/60 dark:border-surface-border-d/40 hover:bg-slate-50/80 dark:hover:bg-surface-overlay-d/40 transition-colors"
-                    >
-                      {/* Left Child Details */}
+                  children.map((child) => {
+                    const storySpan = getStoryGanttSpan(child);
+
+                    return (
                       <div
-                        onClick={() => setIssueKey(child.key)}
-                        className="w-[360px] shrink-0 py-2 px-6 border-r border-slate-100 dark:border-surface-border-d flex items-center justify-between cursor-pointer"
+                        key={child.id}
+                        className="flex items-center border-t border-slate-100/60 dark:border-surface-border-d/40 hover:bg-slate-50/80 dark:hover:bg-surface-overlay-d/40 transition-colors"
                       >
-                        <div className="flex items-center gap-2 min-w-0 flex-1 pl-4">
-                          <IssueIcon issueType={child.type} />
-                          <span className="font-mono text-[10px] font-bold text-slate-500">
-                            {child.key}
-                          </span>
-                          <span className="truncate text-xs font-medium text-slate-700 dark:text-slate-300">
-                            {child.name}
-                          </span>
-                        </div>
-                        <IssueSelectStatus
-                          currentStatus={child.status}
-                          issueId={child.id}
-                          variant="sm"
-                        />
-                      </div>
-
-                      {/* Right Child Sub-bar */}
-                      <div className="flex-1 relative h-9 flex items-center px-4">
-                        <div className="absolute inset-0 grid grid-flow-col auto-cols-fr pointer-events-none">
-                          {timeColumns.map((col) => (
-                            <div
-                              key={col}
-                              className="border-r border-slate-100/40 dark:border-surface-border-d/20 h-full"
-                            />
-                          ))}
-                        </div>
-
-                        {/* Child Task Mini Bar */}
+                        {/* Left Child Details */}
                         <div
                           onClick={() => setIssueKey(child.key)}
-                          style={{
-                            left: `${parseFloat(barStyle.left) + cIdx * 5}%`,
-                            width: `${parseFloat(barStyle.width) * 0.45}%`,
-                          }}
-                          className={clsx(
-                            "absolute h-4 rounded-md flex items-center px-2 cursor-pointer text-[10px] font-bold shadow-2xs transition-all",
-                            child.status === "DONE"
-                              ? "bg-emerald-500 text-white"
-                              : child.status === "IN_PROGRESS"
-                              ? "bg-brand-500 text-white"
-                              : "bg-slate-200 dark:bg-surface-border-d text-slate-700 dark:text-slate-300"
-                          )}
+                          className="w-[360px] shrink-0 py-2 px-6 border-r border-slate-100 dark:border-surface-border-d flex items-center justify-between cursor-pointer"
                         >
-                          <span className="truncate">{child.key}</span>
+                          <div className="flex items-center gap-2 min-w-0 flex-1 pl-4">
+                            <IssueIcon issueType={child.type} />
+                            <span className="font-mono text-[10px] font-bold text-slate-500 shrink-0">
+                              {child.key}
+                            </span>
+                            <span className="truncate text-xs font-medium text-slate-700 dark:text-slate-300">
+                              {child.name}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            {child.cost ? (
+                              <span className="text-[10px] font-bold text-slate-400">
+                                £{child.cost.toLocaleString()}
+                              </span>
+                            ) : null}
+                            {child.storyPoints ? (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-surface-overlay-d text-slate-600 dark:text-slate-300">
+                                {child.storyPoints} pts
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        {/* Right Child Story Mini-Bar positioned in its exact Month */}
+                        <div className="flex-1 relative h-9 flex items-center px-2">
+                          <div className="absolute inset-0 grid grid-flow-col auto-cols-fr pointer-events-none">
+                            {timeColumns.map((col) => (
+                              <div
+                                key={col}
+                                className="border-r border-slate-100/40 dark:border-surface-border-d/20 h-full"
+                              />
+                            ))}
+                          </div>
+
+                          {/* Story Mini Bar inside its month column */}
+                          <div
+                            onClick={() => setIssueKey(child.key)}
+                            style={{
+                              left: storySpan.left,
+                              width: storySpan.width,
+                            }}
+                            className={clsx(
+                              "absolute h-5 rounded-md flex items-center justify-between px-2 cursor-pointer text-[10px] font-bold shadow-2xs transition-all",
+                              child.status === "DONE"
+                                ? "bg-emerald-500 text-white"
+                                : child.status === "IN_PROGRESS"
+                                ? "bg-brand-500 text-white"
+                                : "bg-slate-200 dark:bg-surface-border-d text-slate-700 dark:text-slate-300 hover:bg-slate-300"
+                            )}
+                          >
+                            <span className="truncate font-mono">{child.key}</span>
+                            <span className="text-[9px] opacity-80 shrink-0 ml-1">
+                              M{child.month || 1}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
 
-                {/* Add Story / Task directly under Epic */}
+                {/* Add Story directly under Epic */}
                 {creationParent === epic.id ? (
                   <div className="p-3 border-t border-slate-100 dark:border-surface-border-d">
                     <EmtpyIssue
