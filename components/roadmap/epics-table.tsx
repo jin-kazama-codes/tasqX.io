@@ -218,16 +218,38 @@ const RoadmapTimeline: React.FC<{
     };
   };
 
-  // Dynamic calculation for Epic Gantt bar across the 6 Months
-  const getEpicGanttSpan = (children: IssueType[]) => {
-    const totalCols = timeColumns.length;
-    if (children.length === 0) {
-      return { left: "1%", width: `${(2 / totalCols) * 98}%`, startMonth: 1, endMonth: 2 };
-    }
+const EPIC_SCHEDULE_MAP: Record<string, { start: number; end: number }> = {
+  "SERA-DEV-01": { start: 1, end: 2 },
+  "SERA-DEV-02": { start: 1, end: 3 },
+  "SERA-DEV-03": { start: 2, end: 4 },
+  "SERA-DEV-04": { start: 2, end: 4 },
+  "SERA-DEV-05": { start: 2, end: 5 },
+  "SERA-DEV-06": { start: 2, end: 5 },
+  "SERA-DEV-07": { start: 2, end: 5 },
+  "SERA-DEV-08": { start: 2, end: 5 },
+  "SERA-DEV-09": { start: 1, end: 6 },
+  "SERA-DEV-10": { start: 3, end: 6 },
+  "SERA-DEV-11": { start: 3, end: 6 },
+  "SERA-RND-01": { start: 1, end: 5 },
+  "SERA-RND-02": { start: 3, end: 5 },
+  "SERA-RND-03": { start: 3, end: 5 },
+  "SERA-RND-04": { start: 4, end: 5 },
+  "SERA-INF-00": { start: 1, end: 2 },
+};
 
-    const months = children.map((c) => c.month || 1).filter(Boolean);
-    const minMonth = Math.min(...months);
-    const maxMonth = Math.max(...months);
+  // Dynamic calculation for Epic Gantt bar across the 6 Months
+  const getEpicGanttSpan = (epic: IssueType, children: IssueType[]) => {
+    let minMonth = 1;
+    let maxMonth = 2;
+
+    if (children.length > 0) {
+      const months = children.map((c) => c.month || 1).filter(Boolean);
+      minMonth = Math.min(...months);
+      maxMonth = Math.max(...months);
+    } else if (EPIC_SCHEDULE_MAP[epic.key]) {
+      minMonth = EPIC_SCHEDULE_MAP[epic.key].start;
+      maxMonth = EPIC_SCHEDULE_MAP[epic.key].end;
+    }
 
     if (viewMode === "months") {
       const startIdx = Math.max(0, minMonth - 1);
@@ -335,7 +357,7 @@ const RoadmapTimeline: React.FC<{
         {epicsList.map((epic) => {
           const { percent, completed, total } = calculateProgress(epic.id);
           const children = getEpicChildren(epic.id);
-          const { left, width, startMonth, endMonth } = getEpicGanttSpan(children);
+          const { left, width, startMonth, endMonth } = getEpicGanttSpan(epic, children);
 
           const isRND = epic.budgetTrack === "R&D";
           const isINF = epic.budgetTrack === "Infrastructure";

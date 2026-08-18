@@ -59,18 +59,26 @@ export async function GET(req: NextRequest) {
   
   const isAdminOrManager = userRole && (userRole === "admin" || userRole === "manager");
 
-  let sprintId = searchParams.get("sprintId");
-  if (sprintId === "undefined" || sprintId === "backlog") {
-    sprintId = null;
+  const hasSprintParam = searchParams.has("sprintId");
+  const rawSprintId = searchParams.get("sprintId");
+
+  let sprintFilter: any = undefined;
+
+  if (hasSprintParam && rawSprintId !== "all") {
+    if (rawSprintId === "undefined" || rawSprintId === "backlog" || rawSprintId === "null" || !rawSprintId) {
+      sprintFilter = null;
+    } else {
+      sprintFilter = rawSprintId;
+    }
   }
 
-  // Fetch active issues
+  // Fetch issues
   const activeIssues = await prisma.issue.findMany({
     where: {
       projectId: projectId,
       isDeleted: false,
-      sprintId: sprintId ? sprintId : null,
-      ...(showAssignedTasks && !isAdminOrManager ? { assigneeId: userId } : {}), // Only filter if not admin/manager
+      ...(sprintFilter !== undefined ? { sprintId: sprintFilter } : {}),
+      ...(showAssignedTasks && !isAdminOrManager ? { assigneeId: userId } : {}),
     },
   });
 
