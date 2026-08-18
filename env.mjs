@@ -31,7 +31,7 @@ if (!process.env.SKIP_ENV_VALIDATION) {
     : client.safeParse(processEnv);
 
   if (parsed.success) {
-    env = parsed.data as any;
+    env = parsed.data;
   } else {
     console.warn(
       "⚠️ Environment variable warning:",
@@ -41,13 +41,13 @@ if (!process.env.SKIP_ENV_VALIDATION) {
       DATABASE_URL:
         process.env.DATABASE_URL ||
         "postgresql://postgres:2412917@aAbB@db.puwoxwelsllgifqcsasg.supabase.co:5432/postgres",
-      NODE_ENV: (process.env.NODE_ENV as any) || "development",
+      NODE_ENV: process.env.NODE_ENV || "development",
       NEXT_PUBLIC_SUPABASE_URL:
         process.env.NEXT_PUBLIC_SUPABASE_URL ||
         "https://puwoxwelsllgifqcsasg.supabase.co",
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
         process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "",
-    } as any;
+    };
   }
 }
 
