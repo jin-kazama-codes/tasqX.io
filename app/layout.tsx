@@ -5,44 +5,77 @@ import Toaster from "@/components/toast";
 import QueryProvider from "@/utils/provider";
 import { AuthModalProvider } from "@/context/use-auth-modal";
 import { ThemeProvider } from "@/context/theme-context";
+import dynamic from "next/dynamic";
+
+// Lazy-load the AI Copilot button so it doesn't block initial paint
+const AICopilotButton = dynamic(
+  () => import("@/components/ai/ai-copilot-button"),
+  { ssr: false }
+);
 
 export const metadata: Metadata = {
   title: {
-    default: siteConfig.name,
-    template: `%s - ${siteConfig.name}`,
+    default: `${siteConfig.shortName} — ${siteConfig.tagline}`,
+    template: `%s | ${siteConfig.shortName}`,
   },
   description: siteConfig.description,
-  keywords: [
-    "Jira",
-    "Next.js",
-    "React",
-    "Tailwind CSS",
-    "Server Components",
-    "Radix UI",
-    "TanStack",
-  ],
+  keywords: siteConfig.keywords,
   authors: [
     {
-      name: "Jin Kazama",
-      url: "#",
+      name: "TasqX Team",
+      url: siteConfig.url,
     },
   ],
-  creator: "Jin Kazama",
+  creator: "TasqX",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/images/tasqx-logo.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/icon.svg",
+    apple: "/images/tasqx-logo.svg",
+  },
+  themeColor: "#6366F1",
   openGraph: {
     type: "website",
     locale: "en_US",
     url: siteConfig.url,
-    title: siteConfig.name,
+    title: `${siteConfig.shortName} — ${siteConfig.tagline}`,
     description: siteConfig.description,
-    siteName: siteConfig.name,
+    siteName: siteConfig.shortName,
+    images: [
+      {
+        url: siteConfig.ogImage,
+        width: 512,
+        height: 512,
+        alt: `${siteConfig.shortName} Logo`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${siteConfig.shortName} — ${siteConfig.tagline}`,
+    description: siteConfig.description,
+    images: [siteConfig.ogImage],
+    creator: "@tasqx_app",
   },
 };
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang="en" className="custom-scrollbar">
-      <head />
-      <body className={"overflow-hidden"}>
+      <head>
+        {/* Google Fonts – Inter */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+          rel="stylesheet"
+        />
+        <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+      </head>
+      <body className="overflow-hidden font-sans antialiased">
         <QueryProvider>
           <AuthModalProvider>
             <ThemeProvider>
@@ -55,6 +88,8 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
                 }}
               />
               {children}
+              {/* Global AI Copilot floating button */}
+              <AICopilotButton />
             </ThemeProvider>
           </AuthModalProvider>
         </QueryProvider>

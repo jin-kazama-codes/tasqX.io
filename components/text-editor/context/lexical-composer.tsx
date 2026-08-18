@@ -16,7 +16,7 @@ export const EditorComposer: React.FC<{
   return (
     <LexicalComposer
       initialConfig={{
-        namespace: "Karya.io",
+        namespace: "TasqX.io",
         editorState: JSON.stringify(jsonState),
         editable: !readonly,
         theme: theme,

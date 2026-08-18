@@ -2,28 +2,29 @@
 
 export const useCookie = (cookieParam: string) => {
   // Check if running on the client
-  if (typeof document === 'undefined') {
+  if (typeof document === "undefined") {
     return null;
   }
-  
+
   const cookies = document.cookie.split(";");
   const cookieObj = cookies.find((cookie) =>
     cookie.trim().startsWith(`${cookieParam}=`)
   );
 
   if (cookieObj) {
+    const rawVal = cookieObj.trim().substring(cookieParam.length + 1);
+    if (!rawVal) return null;
+
     try {
-      const cookieVal = cookieObj.split("=")[1];
-      if (cookieVal) {
-        return JSON.parse(cookieVal);
-      } else {
-        console.warn(`${cookieParam} cookie value is undefined`);
+      return JSON.parse(decodeURIComponent(rawVal));
+    } catch {
+      try {
+        return JSON.parse(rawVal);
+      } catch {
+        return rawVal;
       }
-    } catch (error) {
-      console.error(`Error parsing ${cookieParam} Cookie:`, error);
     }
-  } else {
-    console.warn(`${cookieParam} cookie not found`);
   }
+
   return null;
 };

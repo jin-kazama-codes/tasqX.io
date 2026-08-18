@@ -1,44 +1,52 @@
 "use client";
+
 import React, { ReactNode, useEffect, useState } from "react";
 import DocumentUpload from "@/components/modals/documentUpload";
 import CreateFolderButton from "./createFolder";
 import { useDocuments } from "@/hooks/query-hooks/use-documents";
-import { FaTrashAlt, FaFolder } from "react-icons/fa";
-import { CiImageOn } from "react-icons/ci";
-import { VscFilePdf } from "react-icons/vsc";
 import { useCookie } from "@/hooks/use-cookie";
 import DeleteDocument from "@/components/modals/deleteDocument";
 import { DocumentSkeleton } from "../skeletons";
+import {
+  HiOutlineFolder,
+  HiOutlineDocumentText,
+  HiOutlinePhoto,
+  HiOutlineTrash,
+  HiOutlinePlus,
+  HiOutlineArrowDownTray,
+  HiOutlineChevronRight,
+  HiOutlineFolderPlus,
+} from "react-icons/hi2";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import clsx from "clsx";
 
 interface FileItem {
-  link(link: any, arg1: string): void;
-  DefaultUser: any;
-  createdAt: ReactNode;
+  link: string;
+  DefaultUser?: { name: string; avatar?: string };
+  createdAt: string;
   id: string;
   name: string;
-  extensions: "pdf" | "image" | "document";
+  extensions: "pdf" | "image" | "document" | string;
   type: string;
   parentId?: string | null;
   ownerId: number;
 }
 
 const Document: React.FC = () => {
-  const userId = useCookie("user").id;
-  const FileIcon = ({ extensions }: { extensions: FileItem["extensions"] }) => {
+  const user = useCookie("user");
+  const userId = user?.id;
+
+  const FileIcon = ({ extensions }: { extensions: string }) => {
     switch (extensions) {
       case "pdf":
-        return <VscFilePdf className="h-5 w-5 text-red-700 dark:text-dark-0" />;
+        return <HiOutlineDocumentText className="h-5 w-5 text-rose-500" />;
       case "image":
-        return <CiImageOn className="dark:text-dark-0" />;
+        return <HiOutlinePhoto className="h-5 w-5 text-violet-500" />;
       default:
-        return (
-          <>
-            {/* <VscFilePdf /> */}
-            <CiImageOn className="h-5 w-5 text-blue-600" />
-          </>
-        );
+        return <HiOutlineDocumentText className="h-5 w-5 text-brand-500" />;
     }
   };
+
   const [parentId, setParentId] = useState<string | null>(null);
   const {
     documents: allFiles,
@@ -54,17 +62,12 @@ const Document: React.FC = () => {
 
   useEffect(() => {
     if (allFiles) {
-      const sortedFiles = allFiles.slice().sort((a, b) => {
-        const createdAtDiff = new Date(b.createdAt) - new Date(a.createdAt);
-        return createdAtDiff !== 0
-          ? createdAtDiff
-          : a.name.localeCompare(b.name);
+      const sortedFiles = (allFiles as any[]).slice().sort((a, b) => {
+        const createdAtDiff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return createdAtDiff !== 0 ? createdAtDiff : a.name.localeCompare(b.name);
       });
 
-      // Filter folders (items with type other than 'file')
       setFolders(sortedFiles.filter((file) => file.type !== "file"));
-
-      // Filter files (items with type 'file')
       setFiles(sortedFiles.filter((file) => file.type === "file"));
     }
   }, [allFiles]);
@@ -72,146 +75,132 @@ const Document: React.FC = () => {
   const handleFolderClick = (folder: FileItem) => {
     setParentId(folder.id);
     setSelectedFolder(folder);
-    setPathStack((prevStack) => [...prevStack, folder]);
+    setPathStack((prev) => [...prev, folder]);
+    setCurrentPage(1);
   };
 
   const handleBreadcrumbClick = (index: number) => {
-    setSelectedFolder(pathStack[index]);
-    const newStack = pathStack.slice(0, index + 1);
-    setPathStack(newStack); // Remove deeper levels
-    setParentId(newStack[newStack.length - 1]?.id || null);
+    if (index === -1) {
+      setSelectedFolder(null);
+      setParentId(null);
+      setPathStack([]);
+    } else {
+      setSelectedFolder(pathStack[index]);
+      const newStack = pathStack.slice(0, index + 1);
+      setPathStack(newStack);
+      setParentId(newStack[newStack.length - 1]?.id || null);
+    }
+    setCurrentPage(1);
   };
 
-  // Filter files based on selected folder or null parentId
   const displayedFiles = selectedFolder
     ? files.filter((file) => file.parentId === selectedFolder.id)
     : files.filter((file) => file.parentId === null);
 
-  const displayedFolder = selectedFolder
+  const displayedFolders = selectedFolder
     ? folders.filter((folder) => folder.parentId === selectedFolder.id)
     : folders.filter((folder) => folder.parentId === null);
 
-  const itemsPerPage = 6;
+  const itemsPerPage = 8;
   const totalPages = Math.ceil(displayedFiles.length / itemsPerPage);
   const paginatedFiles = displayedFiles.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
-
-  const handlePreviousPage = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
-  };
-
-  const renderPaginationControls = () => (
-    <div className="mt-4 flex items-center justify-between">
-      <button
-        onClick={handlePreviousPage}
-        disabled={currentPage === 1}
-        className="mb-4 rounded-xl bg-button px-4 py-2 text-white hover:cursor-pointer hover:bg-buttonHover dark:bg-dark-0 dark:hover:bg-darkSprint-20"
-      >
-        Previous
-      </button>
-      <span className="dark:text-dark-50">
-        Page {currentPage} of {totalPages}
-      </span>
-      <button
-        onClick={handleNextPage}
-        disabled={currentPage === totalPages}
-        className="mb-4 rounded-xl bg-button px-4 py-2 text-white hover:cursor-pointer hover:bg-buttonHover dark:bg-dark-0 dark:hover:bg-darkSprint-20"
-      >
-        Next
-      </button>
-    </div>
-  );
-
   if (isLoading) return <DocumentSkeleton />;
-  if (error) return <div>Error: {error.message}</div>;
+  if (error) return <div className="p-6 text-red-500">Error: {(error as any).message}</div>;
 
-  const renderBreadcrumb = () => {
-    return (
-      <div className="mb-4 flex items-center text-sm dark:text-dark-50">
+  return (
+    <div className="p-6 max-w-6xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-500/10 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 border border-brand-500/20 shadow-xs">
+            <HiOutlineFolder className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+              Documents & Assets
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Manage project files, specs, and design attachments
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <CreateFolderButton
+            onFolderCreated={refetch}
+            selectedFolderId={selectedFolder?.id}
+          />
+          <DocumentUpload
+            onUploadComplete={refetch}
+            selectedFolderId={selectedFolder?.id}
+          >
+            <button className="btn-brand py-2.5 px-4 text-xs inline-flex items-center gap-1.5">
+              <HiOutlinePlus className="h-4 w-4" />
+              <span>Add File</span>
+            </button>
+          </DocumentUpload>
+        </div>
+      </div>
+
+      {/* Breadcrumb Bar */}
+      <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
         <button
-          onClick={() => {
-            setSelectedFolder(null);
-            setParentId(null);
-            setPathStack([]);
-          }}
-          className="hover:underline"
+          onClick={() => handleBreadcrumbClick(-1)}
+          className={clsx(
+            "rounded-lg px-2 py-1 transition-colors hover:text-slate-900 dark:hover:text-slate-100",
+            !selectedFolder && "bg-slate-100 dark:bg-surface-overlay-d font-bold text-slate-900 dark:text-slate-100"
+          )}
         >
-          Documents
+          Root Documents
         </button>
         {pathStack.map((folder, index) => (
-          <span key={folder.id} className="flex items-center">
-            <span className="mx-1">/</span>
+          <React.Fragment key={folder.id}>
+            <HiOutlineChevronRight className="h-3 w-3 text-slate-400" />
             <button
               onClick={() => handleBreadcrumbClick(index)}
-              className="hover:underline"
+              className={clsx(
+                "rounded-lg px-2 py-1 transition-colors hover:text-slate-900 dark:hover:text-slate-100",
+                index === pathStack.length - 1 &&
+                  "bg-slate-100 dark:bg-surface-overlay-d font-bold text-slate-900 dark:text-slate-100"
+              )}
             >
               {folder.name}
             </button>
-          </span>
+          </React.Fragment>
         ))}
       </div>
-    );
-  };
 
-  const renderContent = () => {
-    if (selectedFolder) {
-      return (
-        <div>
-          {/* Folder Details Header */}
-          <div className="mb-2 flex items-center justify-between">
-            <div className="flex items-center ">{renderBreadcrumb()}</div>
-            <CreateFolderButton
-              onFolderCreated={refetch}
-              selectedFolderId={selectedFolder.id}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-5">
-            {displayedFolder.map((folder) => (
+      {/* Folders Grid (if any folders in current directory) */}
+      {displayedFolders.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            Folders ({displayedFolders.length})
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {displayedFolders.map((folder) => (
               <div
                 key={folder.id}
-                className={`group flex cursor-pointer justify-between rounded-lg border p-2 dark:border-darkButton-0 dark:bg-darkButton-30  
-                  ${
-                    selectedFolder?.id === folder.id ? "bg-blue-50" : "bg-white"
-                  }
-                  transition-colors hover:bg-gray-50 `}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleFolderClick(folder);
-                }}
+                onClick={() => handleFolderClick(folder)}
+                className="group relative flex items-center justify-between p-3.5 rounded-2xl border border-slate-200/80 dark:border-surface-border-d bg-white dark:bg-surface-raised-d hover:border-brand-400 dark:hover:border-brand-500/50 hover:shadow-card cursor-pointer transition-all duration-150"
               >
-                <div className="flex items-center ">
-                  <FaFolder
-                    className={`mr-2 ${
-                      selectedFolder?.id === folder.id
-                        ? "text-blue-500"
-                        : "text-body"
-                    }`}
-                  />
-                  <span className="font-medium dark:text-dark-50">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <HiOutlineFolder className="h-5 w-5 text-brand-500 shrink-0" />
+                  <span className="truncate text-xs font-bold text-slate-800 dark:text-slate-200">
                     {folder.name}
                   </span>
                 </div>
-                {folder.ownerId === userId && (
-                  <div
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                  >
+                {Number(userId) === Number(folder.ownerId) && (
+                  <div onClick={(e) => e.stopPropagation()}>
                     <DeleteDocument Id={folder.id} folder={true}>
                       <button
-                        className="rounded-full p-2 text-red-400 opacity-0 transition-opacity hover:bg-red-100 hover:text-red-200 group-hover:opacity-100 dark:text-dark-50 dark:hover:bg-red-200"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
+                        title="Delete folder"
+                        className="opacity-0 group-hover:opacity-100 h-6 w-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
                       >
-                        <FaTrashAlt className="h-4 w-4 text-red-500" />
+                        <HiOutlineTrash className="h-3.5 w-3.5" />
                       </button>
                     </DeleteDocument>
                   </div>
@@ -219,241 +208,128 @@ const Document: React.FC = () => {
               </div>
             ))}
           </div>
+        </div>
+      )}
 
-          <div className="mt-2 flex items-center justify-between">
-            <h2 className="px-4 py-2 text-lg font-bold dark:text-dark-50">
-              {" "}
-              Files
-            </h2>
-            <DocumentUpload
-              onUploadComplete={refetch}
-              selectedFolderId={selectedFolder.id}
-            >
-              <button className="mb-4 rounded-xl bg-button px-4 py-2 text-white hover:bg-buttonHover  dark:bg-dark-0">
-                Add File
-              </button>
-            </DocumentUpload>
-          </div>
-
+      {/* Files Table Card */}
+      <div className="space-y-2">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          Files ({displayedFiles.length})
+        </h3>
+        <div className="rounded-2xl border border-slate-200/80 dark:border-surface-border-d bg-white dark:bg-surface-raised-d shadow-card overflow-hidden">
           {displayedFiles.length === 0 ? (
-            <div className="py-4 text-center text-gray-500 dark:text-dark-50">
-              No files in this folder
+            <div className="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-slate-500 gap-2">
+              <HiOutlineDocumentText className="h-10 w-10 text-slate-300 dark:text-surface-border-d" />
+              <p className="text-xs font-medium">No files uploaded in this folder.</p>
             </div>
           ) : (
-            <div className="h-[58vh]">
-              <div className="mt-1 h-96  w-full rounded-lg border bg-white shadow dark:border-darkButton-0 dark:bg-darkButton-30">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-darkSprint-20 ">
-                    <tr className="dark:text-dark-50">
-                      <th scope="col" className="cursor-pointer px-6 py-3">
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs sm:text-sm">
+                  <thead className="border-b border-slate-100 dark:border-surface-border-d bg-slate-50/80 dark:bg-surface-overlay-d/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <tr>
+                      <th scope="col" className="px-6 py-3.5">
                         File Name
                       </th>
-                      <th scope="col" className="cursor-pointer px-6 py-3">
+                      <th scope="col" className="px-6 py-3.5">
                         Uploaded By
                       </th>
-                      <th scope="col" className="cursor-pointer px-6 py-3">
-                        Upload Date
+                      <th scope="col" className="px-6 py-3.5">
+                        Date Added
                       </th>
-                      <th scope="col" className="px-6 py-3">
+                      <th scope="col" className="px-6 py-3.5 text-right">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {paginatedFiles.map((file) => (
-                      <tr key={file.id} className="border-b dark:border-b-darkSprint-10 hover:bg-gray-50 dark:text-dark-50 dark:hover:bg-darkButton-20">
-                        <td className="flex items-center gap-2 px-6 py-4">
-                          <FileIcon extensions={file.extensions} />
-                          <button
-                            onClick={() => window.open(file.link, "_blank")}
-                            className="text-black hover:underline dark:text-dark-50"
-                          >
-                            {file.name}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 dark:text-dark-50">
-                          {file.DefaultUser.name}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-1 dark:text-dark-50">
-                            {new Date(file.createdAt).toLocaleDateString()}{" "}
-                            {new Date(file.createdAt).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          {Number(userId) === Number(file.ownerId) && (
-                            <DeleteDocument Id={file.id} folder={false}>
-                              <button className="rounded-lg bg-red-600 px-2 py-2 text-white ">
-                                Delete
-                              </button>
-                            </DeleteDocument>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {renderPaginationControls()}
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // Default view: All folders and root files
-    return (
-      <>
-        {/* Folders Section */}
-        <div>
-          <div className="flex items-center justify-between">
-            <h2 className="px-4 py-2 text-lg font-bold dark:text-dark-50">
-              Folders
-            </h2>
-            <CreateFolderButton onFolderCreated={refetch} />
-          </div>
-
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-5">
-            {displayedFolder.map((folder) => (
-              <div
-                key={folder.id}
-                className={`group flex cursor-pointer justify-between rounded-lg border p-2 dark:border-darkButton-0 dark:bg-darkButton-30 
-                  ${
-                    selectedFolder?.id === folder.id ? "bg-blue-50" : "bg-white"
-                  }
-                  transition-colors hover:bg-gray-50`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleFolderClick(folder);
-                }}
-              >
-                <div className="flex items-center">
-                  <FaFolder
-                    className={`mr-2 dark:text-dark-0 ${
-                      selectedFolder?.id === folder.id
-                        ? "text-blue-500"
-                        : "text-body"
-                    }`}
-                  />
-                  <span className="font-medium dark:text-dark-50">
-                    {folder.name}
-                  </span>
-                </div>
-                {Number(userId) === Number(folder.ownerId) && (
-                  <DeleteDocument Id={folder.id} folder={true}>
-                    <button
-                      className="rounded-full p-2 text-red-400 opacity-0 transition-opacity hover:bg-red-100 hover:text-red-600 group-hover:opacity-100"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                    >
-                      <FaTrashAlt className="h-4 w-4" />
-                    </button>
-                  </DeleteDocument>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Root Files Section */}
-        <div className="mt-2">
-          <div className="flex items-center justify-between">
-            <h2 className="px-4 py-2 text-lg font-bold dark:text-dark-50">
-              {" "}
-              Files
-            </h2>
-            <DocumentUpload onUploadComplete={refetch}>
-              <button className="rounded-xl bg-button px-4 py-2 text-white hover:bg-buttonHover dark:bg-dark-0 dark:hover:bg-darkSprint-20">
-                Add File
-              </button>
-            </DocumentUpload>
-          </div>
-
-          {displayedFiles.length === 0 ? (
-            <div className="py-4 text-center text-gray-500 dark:text-dark-50">
-              No files uploaded
-            </div>
-          ) : (
-            // eslint-disable-next-line react/jsx-key
-            <div className=" h-[58vh] ">
-              <div className="mt-1 h-70  w-full rounded-lg border bg-white shadow  dark:border-darkButton-0 dark:bg-darkButton-30">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-darkSprint-20 ">
-                    <tr className="dark:text-dark-50">
-                      <th scope="col" className="cursor-pointer px-6 py-3">
-                        File Name
-                      </th>
-                      <th scope="col" className="cursor-pointer px-6 py-3">
-                        Uploaded By
-                      </th>
-                      <th scope="col" className="cursor-pointer px-6 py-3">
-                        Upload Date
-                      </th>
-                      <th scope="col" className="px-6 py-3">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-100 dark:divide-surface-border-d">
                     {paginatedFiles.map((file) => (
                       <tr
                         key={file.id}
-                        className="border-b dark:border-b-darkSprint-10 hover:bg-gray-50 dark:text-dark-50 dark:hover:bg-darkButton-20"
+                        className="hover:bg-slate-50/60 dark:hover:bg-surface-overlay-d/40 transition-colors"
                       >
-                        <td className="flex items-center gap-2 px-6 py-4">
-                          <FileIcon extensions={file.extensions} />
-                          <button
-                            onClick={() => window.open(file.link, "_blank")}
-                            className="text-black hover:underline dark:text-dark-50"
-                          >
-                            {file.name}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4">{file.DefaultUser.name}</td>
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-1">
-                            {new Date(file.createdAt).toLocaleDateString()}{" "}
-                            {new Date(file.createdAt).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                          <div className="flex items-center gap-2.5">
+                            <FileIcon extensions={file.extensions} />
+                            <a
+                              href={file.link}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="font-semibold text-slate-800 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400 hover:underline transition-colors"
+                            >
+                              {file.name}
+                            </a>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          {Number(userId) === Number(file.ownerId) && (
-                            <DeleteDocument Id={file.id} folder={false}>
-                              <button className="rounded bg-red-600 px-4 py-2 text-white">
-                                Delete
-                              </button>
-                            </DeleteDocument>
-                          )}
+                        <td className="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium">
+                          {file.DefaultUser?.name ?? "Team Member"}
+                        </td>
+                        <td className="px-6 py-4 text-slate-400 dark:text-slate-500 text-xs">
+                          {new Date(file.createdAt).toLocaleDateString()}{" "}
+                          {new Date(file.createdAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <a
+                              href={file.link}
+                              target="_blank"
+                              rel="noreferrer"
+                              download
+                              title="Download file"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-surface-overlay-d dark:hover:text-slate-200 transition-colors"
+                            >
+                              <HiOutlineArrowDownTray className="h-4 w-4" />
+                            </a>
+                            {Number(userId) === Number(file.ownerId) && (
+                              <DeleteDocument Id={file.id} folder={false}>
+                                <button
+                                  title="Delete file"
+                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400 transition-colors"
+                                >
+                                  <HiOutlineTrash className="h-4 w-4" />
+                                </button>
+                              </DeleteDocument>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              {renderPaginationControls()}
-            </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t border-slate-100 dark:border-surface-border-d px-6 py-3 bg-slate-50/50 dark:bg-surface-overlay-d/40">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    Showing page <span className="font-semibold">{currentPage}</span> of{" "}
+                    <span className="font-semibold">{totalPages}</span>
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-surface-border-d bg-white dark:bg-surface-raised-d text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-surface-overlay-d disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <FaChevronLeft className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-surface-border-d bg-white dark:bg-surface-raised-d text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-surface-overlay-d disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <FaChevronRight className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
-      </>
-    );
-  };
-
-  if (isLoading) return <DocumentSkeleton />;
-  if (error) return <div>Error: {error.message}</div>;
-
-  return (
-    <div className="h-[90vh] custom-scrollbar overflow-y-scroll ">
-      <div className="flex justify-between pb-2">
-        <h1 className="text-2xl font-bold dark:text-dark-50">Documents</h1>
       </div>
-      {renderContent()}
     </div>
   );
 };

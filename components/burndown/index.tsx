@@ -1,31 +1,24 @@
 "use client";
-import React, { Fragment, useEffect, useLayoutEffect, useState } from "react";
+
+import React, { Fragment, useEffect, useState } from "react";
 import { useCookie } from "@/hooks/use-cookie";
-import "@/styles/split.css";
 import { BurndownHeader } from "./header";
 import BurndownIssueList from "./burndown-issue-list";
 import { useIssues } from "@/hooks/query-hooks/use-issues";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { HiOutlineFire, HiOutlineSparkles } from "react-icons/hi2";
 
 const ITEMS_PER_PAGE = 20;
 
 const Burndown: React.FC = () => {
   const project = useCookie("project");
-  const renderContainerRef = React.useRef<HTMLDivElement>(null);
   const [sprintId, setSprintId] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const { issues, issuesLoading } = useIssues(sprintId);
 
-  useLayoutEffect(() => {
-    if (!renderContainerRef.current) return;
-    const calculatedHeight = renderContainerRef.current.offsetTop;
-    renderContainerRef.current.style.height = `calc(100vh - ${calculatedHeight}px)`;
-  }, []);
-
   const allIssues =
     issues?.flatMap((issue) => [issue, ...(issue.children || [])]) || [];
 
-  // Calculate pagination values
   const totalPages = Math.ceil(allIssues?.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
@@ -33,101 +26,89 @@ const Burndown: React.FC = () => {
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
-    // Optionally scroll to top of list
-    renderContainerRef.current?.scrollTo(0, 0);
   };
 
   useEffect(() => {
     setCurrentPage(1);
   }, [sprintId]);
 
-  // if (issuesLoading) {
-  //   return (
-  //     <div>
-  //       <div className="h-10 w-10 animate-spin rounded-full border-4 border-t-4 border-gray-200 border-t-black" />
-  //     </div>
-  //   );
-  // }
-
   if (!project) return null;
 
   return (
-    <Fragment>
+    <div className="p-6 max-w-6xl mx-auto space-y-6">
       <BurndownHeader
         project={project}
         sprintId={sprintId}
         setSprintId={setSprintId}
       />
-      <div className="mt-8 flex min-w-full max-w-max flex-col items-center justify-center">
+
+      <div className="rounded-2xl border border-slate-200/80 dark:border-surface-border-d bg-white dark:bg-surface-raised-d shadow-card overflow-hidden">
         {allIssues?.length > 0 ? (
           <>
             <BurndownIssueList issues={paginatedIssues} />
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="flex w-full items-center justify-between  border-t bg-white px-4 py-3 dark:bg-darkSprint-20">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-gray-700 dark:text-dark-50">
-                    Showing {startIndex + 1} to{" "}
-                    {Math.min(endIndex, allIssues?.length)} of{" "}
-                    {allIssues?.length} issues
-                  </p>
-                </div>
+              <div className="flex items-center justify-between border-t border-slate-100 dark:border-surface-border-d px-6 py-3 bg-slate-50/50 dark:bg-surface-overlay-d/40">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Showing <span className="font-semibold">{startIndex + 1}</span> to{" "}
+                  <span className="font-semibold">{Math.min(endIndex, allIssues?.length)}</span> of{" "}
+                  <span className="font-semibold">{allIssues?.length}</span> tasks
+                </p>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <button
-                    className="rounded-full bg-black p-1.5"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-surface-border-d bg-white dark:bg-surface-raised-d text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-surface-overlay-d disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                   >
-                    <FaChevronLeft className="h-4 w-4 text-white" />
+                    <FaChevronLeft className="h-3 w-3" />
                   </button>
 
                   <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1)
-                      .filter(
-                        (page) =>
-                          page === 1 ||
-                          page === totalPages ||
-                          Math.abs(page - currentPage) <= 1
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          className={`h-8 w-8 rounded-lg text-xs font-semibold transition-colors ${
+                            page === currentPage
+                              ? "bg-brand-500 text-white"
+                              : "bg-slate-100 dark:bg-surface-overlay-d text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-surface-border-d"
+                          }`}
+                        >
+                          {page}
+                        </button>
                       )
-                      .map((page, index, array) => (
-                        <Fragment key={page}>
-                          {index > 0 && array[index - 1] !== page - 1 && (
-                            <span className="px-2">...</span>
-                          )}
-                          <button
-                            onClick={() => handlePageChange(page)}
-                            className={`${
-                              page === currentPage
-                                ? "bg-slate-500 text-white"
-                                : "bg-slate-300"
-                            } w-8 rounded-full`}
-                          >
-                            {page}
-                          </button>
-                        </Fragment>
-                      ))}
+                    )}
                   </div>
 
                   <button
-                    className="rounded-full bg-black p-1.5"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-surface-border-d bg-white dark:bg-surface-raised-d text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-surface-overlay-d disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                   >
-                    <FaChevronRight className="h-4 w-4 text-white" />
+                    <FaChevronRight className="h-3 w-3" />
                   </button>
                 </div>
               </div>
             )}
           </>
         ) : (
-          <p className="mt-36 text-center text-lg text-gray-800 dark:text-dark-50">
-            Complete your first sprint to view this report{" "}
-          </p>
+          <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-500 mb-4 border border-amber-500/20 shadow-xs">
+              <HiOutlineFire className="h-8 w-8" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              No Closed Sprints Yet
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1">
+              Complete and close your active sprint on the Backlog or Board page to generate automated burndown charts and velocity analytics.
+            </p>
+          </div>
         )}
       </div>
-    </Fragment>
+    </div>
   );
 };
 

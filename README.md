@@ -1,57 +1,126 @@
-<h1 align="center">Jira Clone built with React and Next.js 13 (app dir)</h1>
+<div align="center">
 
-![Tech stack](./assets/readme/tech-stack.png)
+<img src="public/images/tasqx-logo.svg" alt="TasqX Logo" width="120" height="120" />
 
-![App screenshot](./assets/readme/backlog-screenshot.png)
+# ⚡ TasqX — Next-Gen Agile Project & Task Management
 
-## <h1>Features</h1>
+**Next-Gen Agile Project Management powered by Supabase, Next.js & Linear-inspired Design.**
 
-- Written in modern React
-- Uses Next js 13.4 app directory structure
-- Explores basic React Server Components
-- Full user authentication lifecycle with custom login
-- Rate limiting with upstash to avoid spamming
-- Modern data fetching using React-Query
-- Simple local React state management, without redux, mobx, or similar
-- Uses Radix UI library for unstyled components and Tailwind for styling
-- Uses Prisma ORM for database modeling
-- Entire app written with typescript
-- End to end type safety with Zod
+[![Next.js](https://img.shields.io/badge/Next.js-13.4-black?style=flat-square&logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.3-38bdf8?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
+[![Prisma](https://img.shields.io/badge/Prisma-4.14-2D3748?style=flat-square&logo=prisma)](https://www.prisma.io/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat-square&logo=supabase)](https://supabase.com/)
+[![TanStack Query](https://img.shields.io/badge/TanStack_Query-v4-FF4154?style=flat-square&logo=react-query)](https://tanstack.com/query)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-## <h1>Setting up development environment</h1>
+[Live Demo](http://localhost:3000) · [Report Bug](https://github.com/jin-kazama-codes/tasqX.io/issues) · [Request Feature](https://github.com/jin-kazama-codes/tasqX.io/issues)
 
-- Project uses Prisma, you can decide which database to use. \*By default it uses the 'mysql' provider
-- `git clone https://github.com/jin-kazama-codes/jira-clone.git`
-- Create an empty `.env` file inside the root dir `/`, copy `/.env.example` contents into it, and fill in the variables needed.
-- `npm install`
-- `npx prisma db seed`
-- Lookup 'USE THIS IF RUNNING LOCALLY' inside the project and follow the instructions.
-- `npm run dev`
-- App should now be running on `http://localhost:3000/`
+</div>
 
-## <h1>What's Pending?</h1>
+---
 
-There are features pending from this showcase product which should exist in a real product:
+## 🌟 Overview
 
-### Unit/Integration tests
+**TasqX** is a modern, blazing-fast, Linear-inspired agile project management platform designed for engineering teams that value speed, clarity, and visual excellence. Built with Next.js 13 App Router, Supabase PostgreSQL, Prisma ORM, and TanStack React Query, TasqX provides everything agile teams need from backlog refinement to sprint retrospectives.
 
-Unit and integration tests are currently in progress... The app will be using [Vitest](https://vitest.dev/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/).
+---
 
-### End to end tests
+## ✨ Features
 
-End to end tests are currently in progress as well... The app will be using [Cypress](https://www.cypress.io/).
+### 🎯 Agile Hierarchy & Task Tracking
+- **Full Hierarchy**: ⚡ **Epics** $\rightarrow$ 🔖 **Stories** $\rightarrow$ 🎯 **Tasks** $\rightarrow$ 🔴 **Bugs** $\rightarrow$ 🔀 **Subtasks**.
+- **Interactive Kanban Board**: Fluid drag-and-drop workflow transitions (`To Do` $\rightarrow$ `In Progress` $\rightarrow$ `Done`) with real-time status updates.
+- **Sprint Management & Backlogs**: Create sprints, drag tasks between backlogs and active sprints, and start/complete sprint cycles with a single click.
+- **Roadmap & Timeline**: Visual milestone planning with Epic tracking spanning across sprints.
 
-## Contributing
+### 🎨 Design & Experience
+- **Linear-Inspired UI**: Indigo/Violet color palette, glassmorphism cards, ambient glowing gradients, and smooth micro-animations.
+- **Dark & Light Mode**: Seamless theme toggle with full system preferences synchronization.
+- **Interactive Task Modal**: Rich Lexical description editor, activity streams (comments & worklogs), time estimation, and progress tracking.
+- **Custom Project Icons**: 12 curated project icons/emojis (`🚀`, `⚡`, `🤖`, `🌐`, `📱`, `🎨`, `🔒`, `💎`, `🎯`, `🔥`, `🛠️`, `💼`) for workspace personalization.
 
-Contributions to this project are welcome. Feel free to submit bug reports, feature requests, or pull requests to help improve the app.
+### 📊 Analytics & Collaboration
+- **Sprint Reports**: Automated **Burndown Charts** and **Velocity Reports** powered by Highcharts.
+- **Document Management**: Project asset and document repository with folder organization and direct downloads.
+- **Team & Permissions**: Role-based access management with **Admin**, **Manager**, and **Member** permissions.
 
-## Acknowledgements
+---
 
-- Inspired by @oldboyxx's https://github.com/oldboyxx/jira_clone
-- App was initially bootstrapped with T3's [create-t3-app](https://create.t3.gg/)
+## 🛠️ Tech Stack
 
-## License
+- **Framework**: [Next.js 13](https://nextjs.org/) (App Router & Server Actions)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) & Custom Design Tokens
+- **Database & Auth**: [Supabase](https://supabase.com/) & PostgreSQL
+- **ORM**: [Prisma](https://www.prisma.io/)
+- **Data Fetching**: [TanStack Query v4](https://tanstack.com/query)
+- **Drag & Drop**: `@hello-pangea/dnd`
+- **Charts**: [Highcharts React](https://github.com/highcharts/highcharts-react)
+- **Rich Text**: [Lexical](https://lexical.dev/)
 
-This project is licensed under the [MIT](https://opensource.org/licenses/MIT) license.
+---
 
+## 🚀 Quick Start
 
+### 1. Clone the repository
+```bash
+git clone https://github.com/jin-kazama-codes/tasqX.io.git
+cd tasqX.io
+```
+
+### 2. Install dependencies
+```bash
+npm install --legacy-peer-deps
+```
+
+### 3. Configure environment variables
+Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
+Fill in your database and Supabase credentials:
+```env
+DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT.supabase.co:5432/postgres"
+NEXT_PUBLIC_SUPABASE_URL="https://YOUR_PROJECT.supabase.co"
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="YOUR_SUPABASE_KEY"
+NEXT_PUBLIC_BASE_URL="http://localhost:3000"
+```
+
+### 4. Push database schema & seed
+```bash
+npx prisma db push
+node prisma/seed-demo.js
+node prisma/seed-epics.js
+```
+
+### 5. Start the development server
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 👥 Demo Credentials
+
+| Role | Email | Password |
+|---|---|---|
+| **Admin** | `admin@tasqx.io` | `password123` |
+| **Manager** | `alex@tasqx.io` | `password123` |
+| **Member** | `sarah@tasqx.io` | `password123` |
+
+---
+
+## 👨‍💻 Author
+
+**Aafaq Ahmad**
+- GitHub: [@jin-kazama-codes](https://github.com/jin-kazama-codes)
+- Project Repository: [tasqX.io](https://github.com/jin-kazama-codes/tasqX.io)
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.

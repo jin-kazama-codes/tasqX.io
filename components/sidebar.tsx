@@ -1,31 +1,35 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { CgGoogleTasks } from "react-icons/cg";
-import {
-  BacklogIcon,
-  BoardIcon,
-  BurndownIcon,
-  DevelopmentIcon,
-  ProjectsIcon,
-  RoadmapIcon,
-  TaskIcon,
-  DocumentIcon,
-  UsersIcon,
-  VelocityIcon,
-} from "./svgs";
-import {
-  NavigationMenu,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from "./ui/navigation-menu";
 import { usePathname } from "next/navigation";
-import { FaChessPawn, FaChevronRight, FaChevronLeft } from "react-icons/fa";
+import {
+  HiOutlineRectangleStack,
+  HiOutlineViewColumns,
+  HiOutlineDocument,
+  HiOutlineFolder,
+  HiOutlineUsers,
+  HiOutlineCog6Tooth,
+  HiOutlineChartBar,
+  HiOutlineFire,
+  HiOutlineSparkles,
+  HiChevronRight,
+  HiOutlineClipboardDocumentList,
+  HiOutlineMapPin,
+} from "react-icons/hi2";
+import { CgGoogleTasks } from "react-icons/cg";
 import { useCookie } from "@/hooks/use-cookie";
 import { useFiltersContext } from "@/context/use-filters-context";
 import { SidebarSkeleton } from "./skeletons";
+import clsx from "clsx";
 
-const STORAGE_KEY = "sidebarCollapsed";
+/* ─── Navigation item type ─────────────────────────────────────────────── */
+type NavItemType = {
+  id: string;
+  label: string;
+  Icon: React.ElementType;
+  href: string;
+};
 
 const Sidebar: React.FC = () => {
   const user = useCookie("user");
@@ -33,298 +37,209 @@ const Sidebar: React.FC = () => {
   const pathname = usePathname();
   const [loading, setLoading] = useState(!project);
   const { assignees, setAssignees } = useFiltersContext();
-  const [isCollapsed, setIsCollapsed] = useState(true);
-  const [isHovered, setIsHovered] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
+  const [hovered, setHovered] = useState(false);
 
   const isAdminOrManager =
     user && (user.role === "admin" || user.role === "manager");
 
   useEffect(() => {
-    if (project) {
-      setLoading(false);
-    }
+    if (project) setLoading(false);
   }, [project]);
 
   const toggleAssigneeFilter = () => {
     setAssignees(assignees.length === 0 ? [user.id] : []);
   };
 
-  const planningItems = [
-    {
-      id: "roadmap",
-      label: "Roadmap",
-      icon: RoadmapIcon,
-      href: `/${project?.key}/roadmap`,
-    },
-    {
-      id: "backlog",
-      label: "Backlog",
-      icon: BacklogIcon,
-      href: `/${project?.key}/backlog`,
-    },
-    {
-      id: "board",
-      label: "Board",
-      icon: BoardIcon,
-      href: `/${project?.key}/board`,
-    },
-    {
-      id: "document",
-      label: "Documents",
-      icon: DocumentIcon,
-      href: `/${project?.key}/document`,
-    },
+  /* ── nav sections ───────────────────────────────────────────────────── */
+  const planningItems: NavItemType[] = [
+    { id: "roadmap",  label: "Roadmap",   Icon: HiOutlineMapPin,              href: `/${project?.key}/roadmap` },
+    { id: "backlog",  label: "Backlog",   Icon: HiOutlineClipboardDocumentList, href: `/${project?.key}/backlog` },
+    { id: "board",    label: "Board",     Icon: HiOutlineViewColumns,          href: `/${project?.key}/board` },
+    { id: "document", label: "Documents", Icon: HiOutlineDocument,            href: `/${project?.key}/document` },
   ];
 
-  const myWorkSpaceItems = [
-    {
-      id: "projects",
-      label: "Projects",
-      icon: ProjectsIcon,
-      href: `/project`,
-    },
+  const workspaceItems: NavItemType[] = [
+    { id: "projects", label: "Projects", Icon: HiOutlineFolder, href: "/project" },
   ];
 
-  const configurationItems = [
-    {
-      id: "users",
-      label: "Users",
-      icon: UsersIcon,
-      href: `/${project?.key}/users`,
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      icon: DevelopmentIcon,
-      href: `/${project?.key}/settings`,
-    },
-  ].filter(Boolean);
-
-  const reportingItems = [
-    {
-      id: "burndown",
-      label: "Burndown Report",
-      icon: BurndownIcon,
-      href: `/${project?.key}/report/burndown`,
-    },
-    {
-      id: "velocity",
-      label: "Velocity Report",
-      icon: VelocityIcon,
-      href: `/${project?.key}/report/velocity`,
-    },
+  const configItems: NavItemType[] = [
+    { id: "users",    label: "Users",    Icon: HiOutlineUsers,      href: `/${project?.key}/users` },
+    { id: "settings", label: "Settings", Icon: HiOutlineCog6Tooth,  href: `/${project?.key}/settings` },
   ];
 
-  if (loading) {
-    return <SidebarSkeleton />;
-  }
+  const reportItems: NavItemType[] = [
+    { id: "burndown", label: "Burndown",  Icon: HiOutlineFire,     href: `/${project?.key}/report/burndown` },
+    { id: "velocity", label: "Velocity",  Icon: HiOutlineChartBar, href: `/${project?.key}/report/velocity` },
+  ];
 
-  const sidebarWidth = isCollapsed && !isHovered ? "w-16" : "w-64";
+  if (loading) return <SidebarSkeleton />;
+
+  const expanded = !collapsed || hovered;
+  const sidebarWidth = expanded ? "w-56" : "w-14";
 
   return (
-    <div
-      className={`relative flex h-[92vh] ${sidebarWidth} rounded-br-xl z-50 flex-col bg-indigo-50 shadow-inner transition-all duration-300 dark:bg-darkSprint-10`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        position: isCollapsed ? "absolute" : "relative",
-      }}
+    <aside
+      className={clsx(
+        "relative flex flex-col h-[92vh] z-50 transition-all duration-200",
+        "bg-white dark:bg-darkSprint-20",
+        "border-r border-slate-200/80 dark:border-surface-border-d",
+        sidebarWidth,
+        !collapsed && "shadow-md"
+      )}
+      style={{ position: collapsed ? "absolute" : "relative" }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      <div className="flex h-full flex-col overflow-hidden">
-        <div
-          className={`flex items-center border-b-2 px-3 py-6 dark:border-b-darkSprint-30 ${
-            isCollapsed && !isHovered ? "justify-center px-0" : "gap-x-2"
-          }`}
-        >
-          <div className="mt-1 flex items-center justify-center rounded-full bg-[#FF5630] p-1 text-xs font-bold text-white">
-            <FaChessPawn className="aspect-square text-2xl" />
-          </div>
-          {(!isCollapsed || isHovered) && (
-            <div className="transition-all duration-300">
-              <h2 className="text-md -mb-[0.5px] font-semibold text-black dark:text-dark-50">
-                {project?.name}
-              </h2>
-            </div>
+      {/* ── Project chip header ───────────────────────────────────────── */}
+      <div
+        className={clsx(
+          "flex items-center border-b border-slate-200/80 dark:border-surface-border-d px-3 py-4",
+          expanded ? "gap-2.5" : "justify-center"
+        )}
+      >
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-gradient shadow-glow-sm text-sm">
+          {project?.imageUrl ? (
+            <span>{project.imageUrl}</span>
+          ) : (
+            <HiOutlineRectangleStack className="h-4 w-4 text-white" />
           )}
         </div>
+        {expanded && (
+          <div className="min-w-0 flex-1 animate-fade-in">
+            <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+              {project?.name ?? "Select project"}
+            </p>
+            <p className="truncate text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">
+              {project?.key ?? "—"}
+            </p>
+          </div>
+        )}
+      </div>
 
-        <div className="custom-scrollbar flex-1 overflow-y-auto px-3 py-4">
-          <style jsx global>{`
-            .custom-scrollbar::-webkit-scrollbar {
-              width: 4px;
-            }
-            
-            .custom-scrollbar::-webkit-scrollbar-track {
-              background: transparent;
-            }
-            
-            .custom-scrollbar::-webkit-scrollbar-thumb {
-              background: #94a3b8;
-              border-radius: 2px;
-            }
-            
-            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-              background: #64748b;
-            }
-            
-            .custom-scrollbar {
-              scrollbar-width: thin;
-              scrollbar-color: #94a3b8 transparent;
-            }
-          `}</style>
-          <div className="flex flex-col gap-y-3">
-            <NavList
-              label="PLANNING"
-              items={planningItems}
-              isCollapsed={isCollapsed}
-              isHovered={isHovered}
-            />
-            <NavList
-              label="MY WORKSPACE"
-              items={myWorkSpaceItems}
-              isCollapsed={isCollapsed}
-              isHovered={isHovered}
-            />
+      {/* ── Scrollable nav ────────────────────────────────────────────── */}
+      <div className="custom-scrollbar flex-1 overflow-y-auto py-3 px-2 flex flex-col gap-y-4">
+        <NavSection
+          label="PLANNING"
+          items={planningItems}
+          expanded={expanded}
+          pathname={pathname}
+        />
 
-            {!pathname.includes("/users") && !pathname.includes("/project") && (
-              <button
-                onClick={toggleAssigneeFilter}
-                className="flex items-center rounded-sm rounded-r-xl border-inherit bg-inherit px-2 py-2 hover:bg-slate-200 dark:hover:bg-darkSprint-30"
+        <NavSection
+          label="WORKSPACE"
+          items={workspaceItems}
+          expanded={expanded}
+          pathname={pathname}
+        />
+
+        {/* My Tasks toggle */}
+        {!pathname.includes("/users") && !pathname.includes("/project") && (
+          <button
+            onClick={toggleAssigneeFilter}
+            title={assignees.length === 0 ? "My Tasks" : "All Tasks"}
+            className={clsx(
+              "sidebar-item w-full",
+              "border-l-2 border-transparent",
+              assignees.length > 0 && "sidebar-item-active"
+            )}
+          >
+            <CgGoogleTasks className="h-4 w-4 shrink-0" />
+            {expanded && (
+              <span className="truncate animate-fade-in">
+                {assignees.length === 0 ? "My Tasks" : "All Tasks"}
+              </span>
+            )}
+          </button>
+        )}
+
+        {isAdminOrManager && (
+          <NavSection
+            label="CONFIG"
+            items={configItems}
+            expanded={expanded}
+            pathname={pathname}
+          />
+        )}
+
+        <NavSection
+          label="REPORTS"
+          items={reportItems}
+          expanded={expanded}
+          pathname={pathname}
+        />
+      </div>
+
+      {/* ── AI Copilot CTA ────────────────────────────────────────────── */}
+      <div className={clsx("px-2 pb-3 mt-auto border-t border-slate-200/80 dark:border-surface-border-d pt-3")}>
+        <button
+          className={clsx(
+            "flex items-center gap-2.5 w-full rounded-xl px-3 py-2.5 text-sm font-semibold",
+            "bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-300",
+            "hover:bg-brand-100 dark:hover:bg-brand-500/20 transition-all duration-150"
+          )}
+          title="AI Copilot"
+        >
+          <HiOutlineSparkles className="h-4 w-4 shrink-0" />
+          {expanded && <span className="animate-fade-in">AI Copilot</span>}
+        </button>
+      </div>
+    </aside>
+  );
+};
+
+/* ─── NavSection ────────────────────────────────────────────────────────── */
+const NavSection: React.FC<{
+  label: string;
+  items: NavItemType[];
+  expanded: boolean;
+  pathname: string;
+}> = ({ label, items, expanded, pathname }) => {
+  const [visible, setVisible] = useState(true);
+
+  return (
+    <div className="flex flex-col gap-y-0.5">
+      {expanded && (
+        <button
+          onClick={() => setVisible((v) => !v)}
+          className="flex items-center gap-1 group mb-1"
+        >
+          <HiChevronRight
+            className={clsx(
+              "h-3 w-3 text-slate-400 transition-transform duration-150",
+              visible && "rotate-90"
+            )}
+          />
+          <span className="section-label">{label}</span>
+        </button>
+      )}
+
+      {visible &&
+        items.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          return (
+            <Link key={item.id} href={item.href} passHref>
+              <div
+                title={!expanded ? item.label : undefined}
+                className={clsx(
+                  "sidebar-item border-l-2",
+                  isActive
+                    ? "border-brand-500 bg-brand-50 dark:bg-brand-500/15 text-brand-700 dark:text-brand-300 font-semibold"
+                    : "border-transparent",
+                  !expanded && "justify-center px-0"
+                )}
               >
-                <CgGoogleTasks className="h-[22px] w-6 dark:text-dark-0" />
-                {(!isCollapsed || isHovered) && (
-                  <span className="ml-3 text-sm transition-all duration-300 dark:text-dark-50">
-                    {assignees.length === 0 ? "My Tasks" : "All Tasks"}
+                <item.Icon className="h-4 w-4 shrink-0" />
+                {expanded && (
+                  <span className="truncate text-sm animate-fade-in">
+                    {item.label}
                   </span>
                 )}
-              </button>
-            )}
-
-            {isAdminOrManager && (
-              <NavList
-                label="CONFIGURATION"
-                items={configurationItems}
-                isCollapsed={isCollapsed}
-                isHovered={isHovered}
-              />
-            )}
-            <NavList
-              label="REPORTS"
-              items={reportingItems}
-              isCollapsed={isCollapsed}
-              isHovered={isHovered}
-            />
-          </div>
-        </div>
-      </div>
+              </div>
+            </Link>
+          );
+        })}
     </div>
-  );
-};
-
-const NavList: React.FC<{
-  items: NavItemType[];
-  label: string;
-  isCollapsed: boolean;
-  isHovered: boolean;
-}> = ({ items, label, isCollapsed, isHovered }) => {
-  const [isVisible, setIsVisible] = useState(true);
-
-  return (
-    <div className="flex flex-col gap-y-2">
-      {(!isCollapsed || isHovered) && (
-        <NavListHeader
-          label={label}
-          isVisible={isVisible}
-          setIsVisible={setIsVisible}
-        />
-      )}
-      <NavigationMenu
-        data-state={isVisible ? "open" : "closed"}
-        className="hidden [&[data-state=open]]:block"
-      >
-        <NavigationMenuList>
-          {items.map((item) => (
-            <NavItem
-              key={item.id}
-              item={item}
-              isCollapsed={isCollapsed}
-              isHovered={isHovered}
-              disabled={label === "DEVELOPMENT"}
-            />
-          ))}
-        </NavigationMenuList>
-      </NavigationMenu>
-    </div>
-  );
-};
-
-const NavListHeader: React.FC<{
-  label: string;
-  isVisible: boolean;
-  setIsVisible: React.Dispatch<React.SetStateAction<boolean>>;
-}> = ({ label, isVisible, setIsVisible }) => (
-  <div className="group flex items-center gap-x-1">
-    <button
-      data-state={isVisible ? "open" : "closed"}
-      onClick={() => setIsVisible(!isVisible)}
-      className="invisible group-hover:visible [&[data-state=open]>svg]:rotate-90"
-    >
-      <FaChevronRight className="text-xs transition-transform dark:text-dark-50" />
-    </button>
-    <span className="text-xs font-bold text-gray-700 dark:text-darkSprint-50">
-      {label}
-    </span>
-  </div>
-);
-
-const NavItem: React.FC<{
-  item: NavItemType;
-  disabled?: boolean;
-  isCollapsed: boolean;
-  isHovered: boolean;
-}> = ({ item, disabled = false, isCollapsed, isHovered }) => {
-  const currentPath = usePathname();
-
-  if (disabled) {
-    return (
-      <div className="w-full rounded-lg text-gray-600 hover:cursor-not-allowed">
-        <div className="flex items-center gap-x-3 border-l-4 border-transparent px-2 py-2 dark:text-dark-0">
-          <item.icon />
-          {(!isCollapsed || isHovered) && (
-            <span className="text-sm dark:text-dark-50">{item.label}</span>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <Link
-      href={item.href}
-      className="w-full rounded-lg text-gray-600"
-      passHref
-      legacyBehavior
-    >
-      <NavigationMenuLink
-        active={currentPath === item.href}
-        className={`flex rounded-sm rounded-r-xl border-transparent py-2 hover:bg-slate-200 dark:hover:bg-darkSprint-30
-          [&[data-active]]:rounded-r-xl [&[data-active]]:border-l-black [&[data-active]]:bg-slate-200 [&[data-active]]:text-black dark:[&[data-active]]:border-l-dark-0 dark:[&[data-active]]:bg-darkSprint-20`}
-      >
-        <div
-          className={`flex items-center gap-x-3 border-l-4 border-inherit bg-inherit pl-2
-          ${
-            isCollapsed && !isHovered ? "justify-center border-l-0" : "w-full"
-          }`}
-        >
-          <item.icon className="dark:text-dark-10 [&[data-active]]:text-blue-500" />
-          {(!isCollapsed || isHovered) && (
-            <span className="whitespace-nowrap text-sm dark:text-dark-50">
-              {item.label}
-            </span>
-          )}
-        </div>
-      </NavigationMenuLink>
-    </Link>
   );
 };
 

@@ -1,4 +1,6 @@
 "use client";
+
+import React, { type ReactNode } from "react";
 import { Button } from "../ui/button";
 import { IssueSelectType } from "./issue-select-type";
 import { type IssueType } from "@/utils/types";
@@ -7,58 +9,53 @@ import { toast } from "../toast";
 import { IssueIcon } from "./issue-icon";
 import { AiOutlinePlus } from "react-icons/ai";
 import { isEpic } from "@/utils/helpers";
-import { type ReactNode } from "react";
 import { useIssues } from "@/hooks/query-hooks/use-issues";
 import { TooltipWrapper } from "../ui/tooltip";
 import { useIsAuthenticated } from "@/hooks/use-is-authed";
 import { useRouter } from "next/navigation";
 import { useCookie } from "@/hooks/use-cookie";
 
-const
-  IssuePath: React.FC<{
-    issue: IssueType;
-    setIssueKey: React.Dispatch<React.SetStateAction<string | null>>;
-  }> = ({ issue, setIssueKey }) => {
-    if (isEpic(issue))
-      return (
-        <div className="flex items-center">
-          <IssueIcon issueType={issue.type} />
-          <TooltipWrapper text={`${issue.key}: ${issue.name}`} side="top">
-            <Button
-              onClick={() => setIssueKey(issue.key)}
-              customColors
-              className=" bg-transparent text-xs dark:text-dark-50 text-gray-800 underline-offset-2 hover:underline"
-            >
-              <span className="whitespace-nowrap ">{issue.key}</span>
-            </Button>
-          </TooltipWrapper>
-        </div>
-      );
+const IssuePath: React.FC<{
+  issue: IssueType;
+  setIssueKey: React.Dispatch<React.SetStateAction<string | null>>;
+}> = ({ issue, setIssueKey }) => {
+  if (isEpic(issue)) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <IssueIcon issueType={issue.type} />
+        <TooltipWrapper text={`${issue.key}: ${issue.name}`} side="top">
+          <IssueLink issue={issue} setIssueKey={setIssueKey} />
+        </TooltipWrapper>
+      </div>
+    );
+  }
 
-    if (issue.parent && isEpic(issue.parent))
-      return (
-        <ParentContainer issue={issue} setIssueKey={setIssueKey}>
-          <IssueSelectEpic issue={issue} key={issue.id}>
-            <IssueIcon issueType={issue.parent.type} />
-          </IssueSelectEpic>
-        </ParentContainer>
-      );
-
-    if (issue.parent)
-      return (
-        <ParentContainer issue={issue} setIssueKey={setIssueKey}>
-          <IssueIcon issueType={issue.parent.type} />
-        </ParentContainer>
-      );
-
+  if (issue.parent && isEpic(issue.parent)) {
     return (
       <ParentContainer issue={issue} setIssueKey={setIssueKey}>
-        <IssueSelectEpic issue={issue}>
-          <AddEpic />
+        <IssueSelectEpic issue={issue} key={issue.id}>
+          <IssueIcon issueType={issue.parent.type} />
         </IssueSelectEpic>
       </ParentContainer>
     );
-  };
+  }
+
+  if (issue.parent) {
+    return (
+      <ParentContainer issue={issue} setIssueKey={setIssueKey}>
+        <IssueIcon issueType={issue.parent.type} />
+      </ParentContainer>
+    );
+  }
+
+  return (
+    <ParentContainer issue={issue} setIssueKey={setIssueKey}>
+      <IssueSelectEpic issue={issue}>
+        <AddEpic />
+      </IssueSelectEpic>
+    </ParentContainer>
+  );
+};
 
 const ParentContainer: React.FC<{
   children: ReactNode;
@@ -81,21 +78,24 @@ const ParentContainer: React.FC<{
       {
         onSuccess: (data) => {
           toast.success({
-            message: `Issue type updated to ${data.type}`,
-            description: "Issue type changed",
+            message: `Task type updated to ${data.type}`,
+            description: "Type changed successfully",
           });
         },
       }
     );
   }
+
   return (
-    <div className="flex  gap-x-3">
-      <div className="flex  items-center dark:text-dark-50">
+    <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
+      <div className="flex items-center">
         {children}
-        <IssueLink issue={issue.parent} setIssueKey={setIssueKey} />
+        {issue.parent && (
+          <IssueLink issue={issue.parent} setIssueKey={setIssueKey} />
+        )}
       </div>
-      <span className="py-1.5 text-black ">/</span>
-      <div className="relative flex items-center">
+      <span className="text-slate-300 dark:text-surface-border-d">/</span>
+      <div className="flex items-center gap-1">
         <IssueSelectType
           key={issue.id + issue.type}
           currentType={issue.type}
@@ -109,35 +109,47 @@ const ParentContainer: React.FC<{
   );
 };
 
-const IssueLink: React.FC<{
-  issue: IssueType | IssueType["parent"] | null;
-  setIssueKey: React.Dispatch<React.SetStateAction<string | null>>;
-}> = ({ issue, setIssueKey }) => {
-  const projectKey = useCookie('project').key
-  const router = useRouter()
-  if (!issue) return <div />;
+const IssueLink = React.forwardRef<
+  HTMLButtonElement,
+  {
+    issue: IssueType | IssueType["parent"] | null;
+    setIssueKey: React.Dispatch<React.SetStateAction<string | null>>;
+  }
+>(({ issue, setIssueKey, ...props }, ref) => {
+  const project = useCookie("project");
+  const projectKey = project?.key;
+  const router = useRouter();
+
+  if (!issue) return <span />;
+
   return (
-    <TooltipWrapper text={`${issue.key}: ${issue.name}`} side="top">
-      <Button
-        onClick={() => {
-          setIssueKey(issue?.key ?? null);
-          router.push(`/${projectKey}/issue/${issue?.key}`)
-        }}
-        customColors
-        className=" bg-transparent text-xs text-black underline-offset-2 hover:underline"
-      >
-        <span className="whitespace-nowrap dark:text-dark-50">{issue?.key}</span>
-      </Button>
-    </TooltipWrapper>
+    <button
+      ref={ref}
+      {...props}
+      onClick={() => {
+        setIssueKey(issue?.key ?? null);
+        if (projectKey && issue?.key) {
+          router.push(`/${projectKey}/issue/${issue.key}`);
+        }
+      }}
+      className="inline-flex items-center px-1.5 py-0.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-slate-100 dark:hover:bg-surface-overlay-d transition-colors"
+    >
+      <span>{issue?.key}</span>
+    </button>
   );
-};
+});
+
+IssueLink.displayName = "IssueLink";
 
 const AddEpic: React.FC = () => {
   return (
-    <div className="flex items-center rounded-xl font-normal  text-black dark:text-dark-50">
-      <AiOutlinePlus className="text-sm" />
+    <button
+      type="button"
+      className="inline-flex items-center gap-1 rounded-lg bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 px-2 py-0.5 text-xs font-semibold text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors"
+    >
+      <AiOutlinePlus className="text-xs" />
       <span>Add Epic</span>
-    </div>
+    </button>
   );
 };
 

@@ -23,14 +23,16 @@ interface WorklogProps {
 }
 
 const Worklog: React.FC<WorklogProps> = ({ issue }) => {
-  const Username = useCookie('user').name
+  const Username = useCookie('user')?.name;
   const {worklogs, worklogsLoading} = useWorklog(issue?.id)
 
   return (
     <div className='mt-2 flex flex-col gap-y-2'>
       <h2 className="dark:text-dark-50">Worklogs</h2>
       {worklogsLoading ? (
-        <div className="flex items-center justify-center mt-5"><div className="h-10 w-10 animate-spin rounded-full border-4 border-t-4 border-gray-200 border-t-black dark:border-t-dark-0 dark:bg-darkSprint-30" /></div>
+        <div className="mt-2 space-y-2">
+          <div className="skeleton h-14 w-full rounded-xl" />
+        </div>
       ) : worklogs.length > 0 ? (
         worklogs.map((worklog, index) => (
           <div className='dark:bg-darkSprint-50 rounded-xl p-3 mb-3'>

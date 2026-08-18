@@ -10,6 +10,8 @@ export function middleware(request: NextRequest) {
     "/login",
     "/forgot-password",
     "/reset-password",
+    "/images/tasqx-logo.svg",
+    "/images/tasqx-logo.png",
     "/images/karya-io-logo.png",
   ];
 

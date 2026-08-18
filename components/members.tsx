@@ -36,12 +36,13 @@ const Members = () => {
     email: "",
   };
   const user = useCookie("user");
-  const { showAssignedTasks } = useCookie("project");
+  const project = useCookie("project");
+  const showAssignedTasks = project?.showAssignedTasks;
   const isAdminOrManager =
     user && (user.role === "admin" || user.role === "manager");
 
   useEffect(() => {
-    if (showAssignedTasks && !isAdminOrManager) {
+    if (showAssignedTasks && !isAdminOrManager && user?.id) {
       setAssignees(assignees.length === 0 ? [user.id] : []);
     }
   }, [showAssignedTasks]);

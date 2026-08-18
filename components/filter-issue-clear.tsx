@@ -15,7 +15,8 @@ const ClearFilters: React.FC = () => {
     sprints,
     setSprints,
   } = useFiltersContext();
-  const { showAssignedTasks } = useCookie("project");
+  const project = useCookie("project");
+  const showAssignedTasks = project?.showAssignedTasks;
   const user = useCookie("user");
   const isAdminOrManager =
     user && (user.role === "admin" || user.role === "manager");

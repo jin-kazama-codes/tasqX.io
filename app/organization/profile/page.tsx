@@ -7,7 +7,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCookie } from "@/hooks/use-cookie";
 import { useCompany } from "@/hooks/query-hooks/use-company";
-("public/images/karya-io-logo.png");
 
 const ProfilePage = () => {
   const [name, setName] = useState("");
@@ -255,7 +254,7 @@ const ProfilePage = () => {
                 ) : (
                   !selectedFile && (
                     <Image
-                      src={logo ? logo : "/images/karya-io-logo.png"}
+                      src={logo ? logo : "/images/tasqx-logo.svg"}
                       alt="Profile picture"
                       width={150}
                       height={150}

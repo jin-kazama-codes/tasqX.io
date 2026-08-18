@@ -21,6 +21,50 @@ import { CgAttachment } from "react-icons/cg";
 import { MdDelete } from "react-icons/md";
 dayjs.extend(relativeTime);
 
+function parseCommentContent(
+  content: string | null | undefined
+): EditorContentType | undefined {
+  if (!content) return undefined;
+  try {
+    const parsed = JSON.parse(content);
+    if (parsed && typeof parsed === "object") {
+      return parsed as EditorContentType;
+    }
+  } catch {
+    // Fallback for plain text comments
+  }
+
+  return {
+    root: {
+      children: [
+        {
+          children: [
+            {
+              detail: 0,
+              format: 0,
+              mode: "normal",
+              style: "",
+              text: content,
+              type: "text",
+              version: 1,
+            },
+          ],
+          direction: "ltr",
+          format: "",
+          indent: 0,
+          type: "paragraph",
+          version: 1,
+        },
+      ],
+      direction: "ltr",
+      format: "",
+      indent: 0,
+      type: "root",
+      version: 1,
+    },
+  } as unknown as EditorContentType;
+}
+
 const Comments: React.FC<{ issue: IssueType }> = ({ issue }) => {
   const scrollRef = useRef(null);
   const [isWritingComment, setIsWritingComment] = useState(false);
@@ -182,8 +226,16 @@ const Comments: React.FC<{ issue: IssueType }> = ({ issue }) => {
   }
   if (commentsLoading) {
     return (
-      <div className="mt-5 flex items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-t-4 border-gray-200 border-t-black dark:border-t-dark-0 dark:bg-darkSprint-30" />
+      <div className="mt-4 flex flex-col gap-3">
+        {[0, 1].map((i) => (
+          <div key={i} className="flex gap-3 items-start">
+            <div className="skeleton h-8 w-8 rounded-full shrink-0" />
+            <div className="flex-1 space-y-1.5">
+              <div className="skeleton h-3.5 w-28 rounded-md" />
+              <div className="skeleton h-12 w-full rounded-xl" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -373,11 +425,7 @@ const CommentPreview: React.FC<{
         {isEditing ? (
           <Editor
             action="comment"
-            content={
-              updatedComment.content
-                ? (JSON.parse(updatedComment.content) as EditorContentType)
-                : undefined
-            }
+            content={parseCommentContent(updatedComment.content)}
             onSave={handleSave}
             onCancel={() => setIsEditing(false)}
             className="mt-2"
@@ -387,11 +435,7 @@ const CommentPreview: React.FC<{
             key={updatedComment.id}
             className="!text-dark-50"
             action="comment"
-            content={
-              updatedComment.content
-                ? (JSON.parse(updatedComment.content) as EditorContentType)
-                : undefined
-            }
+            content={parseCommentContent(updatedComment.content)}
             imageURL={comment.imageURL}
           />
         )}

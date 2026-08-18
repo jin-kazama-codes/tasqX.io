@@ -20,6 +20,14 @@ export const parsePageCookies = (params: string) => {
   const cookieStore = cookies();
   const cookie = cookieStore.get(params)?.value;
 
-  // Parse the cookies if present
-  return cookie ? JSON.parse(cookie) : null;
+  if (!cookie) return null;
+  try {
+    return JSON.parse(decodeURIComponent(cookie));
+  } catch {
+    try {
+      return JSON.parse(cookie);
+    } catch {
+      return cookie;
+    }
+  }
 };

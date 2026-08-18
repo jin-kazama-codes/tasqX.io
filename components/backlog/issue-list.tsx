@@ -133,7 +133,7 @@ const IssueList: React.FC<{ sprintId: string | null; issues: IssueType[] }> = ({
         className="my-1 flex w-full rounded-xl bg-transparent hover:bg-gray-200 dark:text-dark-50 dark:hover:bg-darkSprint-40 dark:hover:text-white [&[data-state=closed]]:hidden"
       >
         <AiOutlinePlus className="text-sm" />
-        <span className="text-md ml-1">Create Issue</span>
+        <span className="text-md ml-1">Create Task</span>
       </Button>
       <EmtpyIssue
         data-state={isEditing ? "open" : "closed"}

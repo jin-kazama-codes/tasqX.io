@@ -9,6 +9,9 @@ export type GetProjectResponse = {
 
 export async function GET() {
   const projectData = parsePageCookies("project");
+  if (!projectData?.key) {
+    return NextResponse.json({ project: null });
+  }
   const project = await prisma.project.findUnique({
     where: {
       key: projectData.key,
@@ -19,8 +22,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const companyId = parsePageCookies("user").companyId;
-  const { name, key, userId } = await request.json();
+  const user = parsePageCookies("user");
+  const companyId = user?.companyId;
+  const { name, key, userId, icon, imageUrl } = await request.json();
 
   if (!name || !key || !userId) {
     return NextResponse.json(
@@ -50,6 +54,7 @@ export async function POST(request: Request) {
       data: {
         name,
         key,
+        imageUrl: icon || imageUrl || "🚀",
         defaultAssignee: String(userId),
         companyId,
       },

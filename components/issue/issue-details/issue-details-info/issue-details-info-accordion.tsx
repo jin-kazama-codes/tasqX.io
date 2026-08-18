@@ -1,15 +1,8 @@
-import { FaChevronDown, FaChevronUp, FaRegCalendarAlt, FaRegClock } from "react-icons/fa";
-import { Button } from "@/components/ui/button";
+"use client";
+
 import { useState } from "react";
 import { type IssueType } from "@/utils/types";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Avatar } from "@/components/avatar";
-import { useSprints } from "@/hooks/query-hooks/use-sprints";
 import { IssueAssigneeSelect } from "../../issue-select-assignee";
 import { useIssues } from "@/hooks/query-hooks/use-issues";
 import { useIsAuthenticated } from "@/hooks/use-is-authed";
@@ -17,8 +10,14 @@ import { useCookie } from "@/hooks/use-cookie";
 import TimeTrackingModal from "@/components/modals/time-track";
 import ProgressBar from "@/components/time-progress";
 import { OriginalEstimate } from "@/components/original-estimate";
-import { MdPersonOutline, MdReportGmailerrorred, MdTrackChanges, MdUpdate } from "react-icons/md";
-import { IoMdTimer } from "react-icons/io"
+import {
+  HiOutlineUser,
+  HiOutlineFlag,
+  HiOutlineClock,
+  HiOutlineCalendar,
+  HiOutlineArrowPath,
+  HiOutlineUserCircle,
+} from "react-icons/hi2";
 import { dateToLongString } from "@/utils/helpers";
 
 const IssueDetailsInfoAccordion: React.FC<{ issue: IssueType }> = ({
@@ -28,9 +27,8 @@ const IssueDetailsInfoAccordion: React.FC<{ issue: IssueType }> = ({
   const [isAuthenticated, openAuthModal] = useIsAuthenticated();
 
   const user = useCookie("user");
-  const [openAccordion, setOpenAccordion] = useState("details");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditing, setisEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   function handleAutoAssign() {
     if (!isAuthenticated) {
@@ -38,156 +36,128 @@ const IssueDetailsInfoAccordion: React.FC<{ issue: IssueType }> = ({
       return;
     }
 
-    updateIssue({
-      issueId: issue.id,
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      assigneeId: user!.id,
-    });
+    if (user?.id) {
+      updateIssue({
+        issueId: issue.id,
+        assigneeId: user.id,
+      });
+    }
   }
 
-  // Handler to open the modal when the progress bar is clicked
   function handleProgressBarClick() {
     setIsModalOpen(true);
   }
 
   return (
     <>
-      <Accordion
-        onValueChange={setOpenAccordion}
-        value={openAccordion}
-        className="my-3 w-min min-w-full rounded-xl dark:border-darkButton-0 dark:bg-darkButton-30  border-2 "
-        type="single"
-        collapsible
-      >
-        <AccordionItem value={"details"}>
-          <AccordionTrigger className="flex w-full items-center justify-between p-2 rounded-t-xl font-medium hover:bg-gray-100 dark:hover:bg-darkSprint-20 dark:bg-darkSprint-30 [&[data-state=open]>svg]:rotate-180 [&[data-state=open]]:border-b border-b-black">
-            <div className="flex items-center gap-x-1">
-              <span className="text-sm dark:text-dark-50">Details</span>
-              <span className="text-xs text-gray-600 dark:text-darkSprint-0">
-                (Assignee, Sprint, Reporter)
-              </span>
+      <div className="rounded-2xl border border-slate-200/80 dark:border-surface-border-d bg-white dark:bg-surface-raised-d/60 shadow-card p-5 space-y-4">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 pb-1 border-b border-slate-100 dark:border-surface-border-d">
+          Properties
+        </h3>
+
+        <div className="space-y-3.5 text-xs">
+          {/* Assignee */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium">
+              <HiOutlineUser className="h-4 w-4 text-slate-400" />
+              <span>Assignee</span>
             </div>
-            <FaChevronDown
-              className="mr-2 text-xs text-black transition-transform"
-              aria-hidden
-            />
-          </AccordionTrigger>
-          <AccordionContent className="flex flex-col bg-transparent px-3 [&[data-state=open]]:py-2">
-            <div
-              data-state={issue.assignee ? "assigned" : "unassigned"}
-              className="my-2 grid grid-cols-2 [&[data-state=assigned]]:items-center"
-            >
-              <div className="flex justify-start gap-x-2 items-center">
-              <MdPersonOutline className="dark:text-dark-50" size={20}/>
-              <span className="text-sm font-semibold text-gray-800 dark:text-dark-50">
-                Assignee
-              </span>
-              </div>
-              <div className="flex flex-col">
-                <IssueAssigneeSelect className="dark:text-dark-50" issue={issue} />
-                <Button
+            <div className="flex flex-col items-end">
+              <IssueAssigneeSelect issue={issue} />
+              {!issue.assignee && (
+                <button
                   onClick={handleAutoAssign}
-                  data-state={issue.assignee ? "assigned" : "unassigned"}
-                  customColors
-                  customPadding
-                  className="mt-1 hidden text-sm text-blue-600 dark:text-darkSprint-0 underline-offset-2 hover:underline [&[data-state=unassigned]]:flex"
+                  className="mt-1 text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:underline"
                 >
                   Assign to me
-                </Button>
-              </div>
+                </button>
+              )}
             </div>
-            <div className="my-4 grid grid-cols-2 items-center">
-            <div className="flex justify-start gap-x-2 items-center">
-            <MdTrackChanges className="dark:text-dark-50" size={20}/>
-              <span className="text-sm font-semibold text-gray-800 dark:text-dark-50">
-                Sprint
+          </div>
+
+          {/* Sprint */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium">
+              <HiOutlineFlag className="h-4 w-4 text-slate-400" />
+              <span>Sprint</span>
+            </div>
+            <span className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[160px]">
+              {issue?.sprint?.name ?? "Backlog (No sprint)"}
+            </span>
+          </div>
+
+          {/* Reporter */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium">
+              <HiOutlineUserCircle className="h-4 w-4 text-slate-400" />
+              <span>Reporter</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Avatar
+                src={issue.reporter?.avatar}
+                alt={issue.reporter?.name ?? "Unassigned"}
+                className="h-5 w-5"
+              />
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                {issue.reporter?.name ?? "Admin"}
               </span>
-              </div>
-              <div className="flex items-center">
-                <span className="text-sm text-gray-900 dark:text-dark-50">
-                  {issue?.sprint?.name ?? "None"}
-                </span>
-              </div>
             </div>
-            <div className="my-2 grid grid-cols-2 items-center">
-            <div className="flex justify-start gap-x-2 items-center">
-            <MdReportGmailerrorred className="dark:text-dark-50" size={20}/>
-              <span className="text-sm font-semibold text-gray-800 dark:text-dark-50">
-                Reporter
-              </span>
-              </div>
-              <div className="flex items-center gap-x-3 ">
-                <Avatar
-                  src={issue.reporter?.avatar}
-                  alt={`${issue.reporter?.name ?? "Unassigned"}`}
-                />
-                <span className="whitespace-nowrap text-sm">
-                  {issue.reporter?.name}
-                </span>
-              </div>
+          </div>
+
+          {/* Original Estimate */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium">
+              <HiOutlineClock className="h-4 w-4 text-slate-400" />
+              <span>Estimate</span>
             </div>
-            <div className="my-6 grid grid-cols-2 items-center">
-              <div className="flex justify-start gap-x-2 items-center">
-            <FaRegClock className="dark:text-dark-50" size={17}/>
-              <span className="text-sm font-semibold text-gray-800 dark:text-dark-50">
-                Original Estimate
-              </span>
-              </div>
-              <div className="flex items-center">
-                <OriginalEstimate
-                  isEditing={isEditing}
-                  setIsEditing={setisEditing}
-                  issue={issue}
-                  className="text-sm bg-slate-200 dark:bg-darkSprint-20 dark:text-dark-50 p-2 rounded-xl "
-                />
-              </div>
+            <OriginalEstimate
+              isEditing={isEditing}
+              setIsEditing={setIsEditing}
+              issue={issue}
+              className="rounded-lg bg-slate-100 dark:bg-surface-overlay-d px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300"
+            />
+          </div>
+
+          {/* Time Tracking */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium">
+              <HiOutlineClock className="h-4 w-4 text-slate-400" />
+              <span>Time Tracking</span>
             </div>
-            <div className="my-6 grid grid-cols-2 items-center">
-            <div className="flex justify-start gap-x-2 items-center">
-            <IoMdTimer className="dark:text-dark-50" size={20}/>
-              <span className="text-sm font-semibold text-gray-800 dark:text-dark-50">
-                Time Tracking
-              </span>
-              </div>
-              <div
-                className="flex items-center"
-                onClick={handleProgressBarClick}
-              >
-                <ProgressBar
-                  timeSpent={issue.timeSpent}
-                  estimateTime={issue.estimateTime}
-                />
-              </div>
+            <div
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={handleProgressBarClick}
+            >
+              <ProgressBar
+                timeSpent={issue.timeSpent}
+                estimateTime={issue.estimateTime}
+              />
             </div>
-            <div className="my-4 grid grid-cols-2 items-center">
-            <div className="flex justify-start gap-x-2 items-center">
-            <FaRegCalendarAlt className="dark:text-dark-50" size={18}/>
-              <span className="text-sm font-semibold text-gray-800 dark:text-dark-50">
-                Created
-              </span>
-              </div>
-              <div className="flex items-center">
-                <span className="text-sm text-gray-900 dark:text-dark-50">
-                  {dateToLongString(issue.createdAt)}
-                </span>
-              </div>
+          </div>
+
+          {/* Created */}
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-surface-border-d">
+            <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 text-[11px]">
+              <HiOutlineCalendar className="h-3.5 w-3.5" />
+              <span>Created</span>
             </div>
-            <div className="my-4 grid grid-cols-2 items-center">
-            <div className="flex justify-start gap-x-2 items-center">
-            <MdUpdate className="dark:text-dark-50" size={20}/>
-              <span className="text-sm font-semibold text-gray-800 dark:text-dark-50">
-                Updated
-              </span>
-              </div>
-              <div className="flex items-center">
-                <span className="text-sm text-gray-900 dark:text-dark-50">
-                {dateToLongString(issue.updatedAt)}
-                </span>
-              </div>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+              {dateToLongString(issue.createdAt)}
+            </span>
+          </div>
+
+          {/* Updated */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 text-[11px]">
+              <HiOutlineArrowPath className="h-3.5 w-3.5" />
+              <span>Updated</span>
             </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+              {dateToLongString(issue.updatedAt)}
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Time Tracking Modal */}
       {isModalOpen && (

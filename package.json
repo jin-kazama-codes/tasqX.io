@@ -1,5 +1,5 @@
 {
-  "name": "jiraclone",
+  "name": "tasqx",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -25,6 +25,7 @@
     "@radix-ui/react-popover": "^1.0.5",
     "@radix-ui/react-select": "^1.2.1",
     "@radix-ui/react-tooltip": "^1.0.5",
+    "@supabase/supabase-js": "^2.112.3",
     "@tailwindcss/forms": "^0.5.3",
     "@tanstack/react-query": "^4.29.12",
     "@tanstack/react-query-devtools": "^4.29.12",

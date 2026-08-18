@@ -17,7 +17,7 @@ import {
 import { TooltipWrapper } from "../ui/tooltip";
 import { capitalize } from "@/utils/helpers";
 
-export const ISSUE_TYPES: IssueType["type"][] = ["STORY", "TASK", "BUG"];
+export const ISSUE_TYPES: IssueType["type"][] = ["EPIC", "STORY", "TASK", "BUG"];
 const SUBTASK_OPTIONS: IssueType["type"][] = ["SUBTASK"];
 const IssueSelectType: React.FC<{
   currentType: IssueType["type"];

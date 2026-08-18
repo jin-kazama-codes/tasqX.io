@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { useIsInViewport } from "@/hooks/use-is-in-viewport";
 import { IssueDetailsHeader } from "./issue-details-header";
@@ -7,68 +8,96 @@ import { useSelectedIssueContext } from "@/context/use-selected-issue-context";
 import { useCookie } from "@/hooks/use-cookie";
 import { getProjectKeyFromUrl, setCookie } from "@/utils/helpers";
 import { useIssueDetails } from "@/hooks/query-hooks/use-issue-details";
+import clsx from "clsx";
 
 const IssueDetails: React.FC<{
   issueKey?: string;
   detailPage?: boolean;
   roadmap?: boolean;
 }> = ({ issueKey: detailIssueKey, detailPage, roadmap = false }) => {
-  const { issue, issueLoading, refetch } = useIssueDetails();
   const { issueKey, setIssueKey } = useSelectedIssueContext();
+  const effectiveKey = detailIssueKey || issueKey;
+  const { issue, issueLoading, refetch } = useIssueDetails(
+    effectiveKey || undefined
+  );
   const renderContainerRef = React.useRef<HTMLDivElement>(null);
   const [isInViewport, viewportRef] = useIsInViewport({ threshold: 1 });
   const project = useCookie("project");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const projectKey = getProjectKeyFromUrl();
 
   useEffect(() => {
-    if (detailIssueKey) {
+    if (detailIssueKey && detailIssueKey !== issueKey) {
       setIssueKey(detailIssueKey);
     }
-    if (issueKey) {
-      refetch();
-    }
-  }, [detailIssueKey, issueKey]);
-
+  }, [detailIssueKey]);
 
   useEffect(() => {
-    if (!project) {
-      async function fetchProjectByKey(projectKey: string | null) {
+    if (!project?.key && projectKey) {
+      async function fetchProjectByKey(key: string) {
         try {
-          const response = await fetch(`/api/project/${projectKey}`);
-          if (!response.ok) {
-            throw new Error("Failed to fetch project");
+          const response = await fetch(`/api/project/${key}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.project) {
+              setCookie("project", data.project);
+            }
           }
-          const data = await response.json();
-          setCookie("project", data.project);
         } catch (error) {
           console.error("Error fetching project:", error);
-        } finally {
-          setLoading(false);
         }
       }
       fetchProjectByKey(projectKey);
-    } else {
-      setLoading(false);
     }
-  }, [project, projectKey]);
+  }, [project?.key, projectKey]);
 
-  if (!roadmap && (loading || issueLoading)) {
-    return <div ref={renderContainerRef}
-    className="relative z-10 flex w-full h-[70vh] items-center justify-center rounded-xl bg-white pl-4 pr-2 dark:bg-darkSprint-10 [&[data-state=closed]]:hidden"><div className="h-10 w-10 animate-spin rounded-full border-4 border-t-4 border-gray-200 border-t-black dark:border-t-dark-0 dark:bg-darkSprint-30" /></div>;
+  // Don't render anything if not on detailPage and no issue is selected
+  const isOpen = Boolean(detailPage || effectiveKey);
+  if (!isOpen) return null;
+
+  if (!roadmap && (issueLoading || loading)) {
+    return (
+      <div
+        ref={renderContainerRef}
+        className="relative z-10 flex w-full flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-6 dark:border-surface-border-d dark:bg-surface-raised-d shadow-modal animate-fade-in"
+      >
+        <div className="flex items-center justify-between">
+          <div className="skeleton h-5 w-24 rounded-lg" />
+          <div className="flex gap-2">
+            <div className="skeleton h-6 w-6 rounded-lg" />
+            <div className="skeleton h-6 w-6 rounded-lg" />
+          </div>
+        </div>
+        <div className="skeleton h-8 w-3/4 rounded-xl" />
+        <div className="space-y-4 mt-2">
+          <div className="skeleton h-24 w-full rounded-2xl" />
+          <div className="skeleton h-32 w-full rounded-2xl" />
+        </div>
+      </div>
+    );
   }
 
   if (!issue) {
-    return <div ref={renderContainerRef}
-    data-state={issueKey ? "open" : "closed"}
-    className="relative z-10 flex w-full flex-col  rounded-xl bg-white pl-4 pr-2 dark:bg-darkSprint-10 [&[data-state=closed]]:hidden">Couldn't find Issue</div>;
+    return (
+      <div
+        ref={renderContainerRef}
+        className="relative z-10 flex w-full flex-col items-center justify-center p-12 rounded-2xl border border-slate-200/80 dark:border-surface-border-d bg-white dark:bg-surface-raised-d shadow-card text-center"
+      >
+        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+          Task not found
+        </p>
+        <p className="text-xs text-slate-400 mt-1">
+          The selected task may have been removed or does not exist.
+        </p>
+      </div>
+    );
   }
 
   return (
     <div
       ref={renderContainerRef}
-      data-state={issueKey ? "open" : "closed"}
-      className="relative z-10 flex w-full flex-col  rounded-xl bg-white pl-4 pr-2 dark:bg-darkSprint-10 [&[data-state=closed]]:hidden"
+      data-state="open"
+      className="relative z-10 flex w-full flex-col rounded-2xl border border-slate-200/80 dark:border-surface-border-d bg-white dark:bg-surface-base-d shadow-card overflow-hidden"
     >
       <IssueDetailsHeader
         detailPage={detailPage}

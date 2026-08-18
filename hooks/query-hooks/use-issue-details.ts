@@ -7,47 +7,31 @@ import { toast } from "@/components/toast";
 import { type AxiosError } from "axios";
 import { TOO_MANY_REQUESTS, useIssues } from "./use-issues";
 
-export const useIssueDetails = (issueId?: string) => {
-  const { issueKey } = useSelectedIssueContext();
-  
-  // const { issues } = useIssues();
-
-  // const getIssueId = useCallback(
-  //   (issues: IssueType[] | undefined) => {
-  //     return issues?.find((issue) => issue.key === issueKey)?.id ?? null;
-  //   },
-  //   [issueKey]
-  // );
-
-  // const [issueId, setIssueId] = useState<IssueType["id"] | null>(() =>
-  //   getIssueId(issues)
-  // );
-
-  // useEffect(() => {
-  //   setIssueId(getIssueId(issues));
-  // }, [setIssueId, getIssueId, issues]);
-
+export const useIssueDetails = (paramIssueKey?: string) => {
+  const { issueKey: contextKey } = useSelectedIssueContext();
+  const effectiveKey = paramIssueKey || contextKey;
   const queryClient = useQueryClient();
 
-  // GET
+  // GET comments
   const { data: comments, isLoading: commentsLoading } = useQuery(
-    ["comments", issueId],
-    () => api.issues.getIssueComments({ issueId: issueId ?? "" }),
+    ["comments", effectiveKey],
+    () => api.issues.getIssueComments({ issueId: effectiveKey ?? "" }),
     {
-      enabled: !!issueId,
+      enabled: !!effectiveKey,
       refetchOnMount: false,
     }
   );
 
   // Get issue Details
   const { data: issue, isLoading: issueLoading, refetch } = useQuery(
-    [`issueDetails`, issueKey],
+    [`issueDetails`, effectiveKey],
     () => {
-      return api.issues.getIssueDetails(issueKey);
-    },  
+      return api.issues.getIssueDetails(effectiveKey);
+    },
     {
-      enabled: !!issueKey,
-      refetchOnMount: true
+      enabled: !!effectiveKey,
+      refetchOnMount: true,
+      staleTime: 30 * 1000,
     }
   );
 

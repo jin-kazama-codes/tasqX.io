@@ -213,17 +213,23 @@ export function getPluralEnd<T>(arr: T[]) {
   return arr.length > 1 ? "s" : "";
 }
 
-export const setCookie = (param: string, obj: {}) => {
-  // Set project in cookie when a project is clicked
-  const cookieValue = JSON.stringify(obj);
+export const setCookie = (param: string, obj: any) => {
+  // Set cookie with safe serialization and protocol-aware secure flag
+  const cookieValue = typeof obj === "string" ? obj : JSON.stringify(obj);
   const expiryDate = new Date();
   expiryDate.setDate(expiryDate.getDate() + 7); // Cookie expires in 7 days
-  document.cookie = `${param}=${cookieValue}; expires=${expiryDate.toUTCString()}; path=/; secure; SameSite=lax`;
+  const isHttps =
+    typeof window !== "undefined" && window.location.protocol === "https:";
+  document.cookie = `${param}=${encodeURIComponent(
+    cookieValue
+  )}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax${
+    isHttps ? "; Secure" : ""
+  }`;
 };
 
 export const timeStringToMinutes = (timeString?: string) => {
   if (!timeString) return 0; // Return 0 if timeString is null or undefined
-  const Workingdays = useCookie("project").workingDays;
+  const Workingdays = useCookie("project")?.workingDays || 5;
 
   const timeRegex = /(?:(\d+)w)?\s*(?:(\d+)d)?\s*(?:(\d+)h)?\s*(?:(\d+)m)?/;
   const matches = timeString.match(timeRegex);
@@ -240,7 +246,7 @@ export const timeStringToMinutes = (timeString?: string) => {
 };
 
 export const minutesToTimeString = (totalMinutes) => {
-  const Workingdays = useCookie("project").workingDays;
+  const Workingdays = useCookie("project")?.workingDays || 5;
 
   const minutesInDay = 480; // 1 day = 8 hours = 480 minutes
   const minutesInWeek = Workingdays * minutesInDay;
@@ -256,7 +262,7 @@ export const minutesToTimeString = (totalMinutes) => {
 };
 
 export const timeStringToHours = (timeString?: string) => {
-  const Workingdays = useCookie("project").workingDays;
+  const Workingdays = useCookie("project")?.workingDays || 5;
   if (!timeString) return 0; // Return 0 if timeString is null or undefined
 
   const timeRegex = /(?:(\d+)w)?\s*(?:(\d+)d)?\s*(?:(\d+)h)?\s*(?:(\d+)m)?/;
@@ -275,7 +281,7 @@ export const timeStringToHours = (timeString?: string) => {
 export const hoursToTimeString = (hours: number) => {
   if (!hours) return "0h";
 
-  const Workingdays = useCookie("project").workingDays;
+  const Workingdays = useCookie("project")?.workingDays || 5;
 
   const hoursInDay = 8; // 1 day = 8 hours
   const hoursInWeek = Workingdays * hoursInDay;

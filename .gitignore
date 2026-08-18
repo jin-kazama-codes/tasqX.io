@@ -43,4 +43,14 @@ yarn-error.log*
 
 # files to ignore
 /prisma/un-seed.ts
+/prisma/seed-demo.js
+/prisma/seed-demo.ts
+/prisma/seed-epics.js
+/prisma/seed-*.js
 config.load
+
+# agent / scratch work files
+.agents/
+scratch/
+tmp/
+

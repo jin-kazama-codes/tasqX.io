@@ -227,8 +227,7 @@ const SprintListHeader: React.FC<{
                   {getFormattedDateRange(sprint.startDate, sprint.endDate)}
                 </span>
                 <span className="dark:text-dark-50">
-                  ({issues.length ? issues.length : 0} issue
-                  {getPluralEnd(issues)})
+                  ({issues.length ? issues.length : 0} {issues.length === 1 ? "task" : "tasks"})
                 </span>
                 {convertedOriginalEstimate ? (
                   <span className="dark:text-darkSprint-50">
@@ -274,15 +273,16 @@ const SprintActionButton: React.FC<{ sprint: Sprint; issues: IssueType[] }> = ({
   sprint,
   issues,
 }) => {
+  const user = useCookie("user");
   if (
     sprint.status === "ACTIVE" &&
     (user?.role === "admin" || user?.role === "manager")
   ) {
     return (
       <CompleteSprintModal issues={issues} sprint={sprint}>
-        <Button className="rounded-xl !bg-button px-4  hover:!bg-buttonHover dark:!bg-dark-0">
-          <span className="whitespace-nowrap text-white">Complete sprint</span>
-        </Button>
+        <button className="flex items-center rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-brand-500 dark:hover:bg-brand-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-all duration-150">
+          <span className="whitespace-nowrap">Complete sprint</span>
+        </button>
       </CompleteSprintModal>
     );
   }
@@ -293,9 +293,9 @@ const SprintActionButton: React.FC<{ sprint: Sprint; issues: IssueType[] }> = ({
   ) {
     return (
       <StartSprintModal issueCount={issues.length} sprint={sprint}>
-        <Button className="rounded-xl !bg-button px-4 hover:!bg-buttonHover  dark:!bg-dark-0 ">
-          <span className="whitespace-nowrap text-white">Start sprint</span>
-        </Button>
+        <button className="flex items-center rounded-xl bg-brand-500 hover:bg-brand-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-glow-sm hover:shadow-glow transition-all duration-150">
+          <span className="whitespace-nowrap">Start sprint</span>
+        </button>
       </StartSprintModal>
     );
   }

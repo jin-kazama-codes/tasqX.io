@@ -1,37 +1,165 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-h1 {
-    @apply text-2xl font-medium my-1;
+/* ───────────────────────────────────────────────────────────────────────────
+   Base layer — design tokens & resets
+   ──────────────────────────────────────────────────────────────────────────*/
+@layer base {
+  :root {
+    /* Semantic color tokens – light mode */
+    --bg-base:    #ffffff;
+    --bg-raised:  #f8fafc;
+    --bg-overlay: #f1f5f9;
+    --border:     #e2e8f0;
+    --text-primary:   #0f172a;
+    --text-secondary: #475569;
+    --text-muted:     #94a3b8;
+    --brand:      #6366f1;
+    --brand-dark: #4f46e5;
+    --shadow-card: 0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+  }
+
+  .dark {
+    --bg-base:    #0b0f17;
+    --bg-raised:  #111827;
+    --bg-overlay: #1e293b;
+    --border:     #334155;
+    --text-primary:   #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted:     #64748b;
+    --shadow-card: 0 2px 8px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+  }
+
+  h1 {
+    @apply text-2xl font-semibold tracking-tight my-1;
+  }
+
+  h2 {
+    @apply text-base font-semibold tracking-tight my-1;
+  }
 }
 
-h2 {
-    @apply text-base font-medium my-1;
+/* ───────────────────────────────────────────────────────────────────────────
+   Component utilities
+   ──────────────────────────────────────────────────────────────────────────*/
+@layer components {
+  /* Glass card surface */
+  .glass-card {
+    @apply bg-white/80 dark:bg-white/5 backdrop-blur-md border border-white/20 dark:border-white/10;
+  }
+
+  /* Branded action button */
+  .btn-brand {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-sm px-4 py-2.5 transition-all duration-150 shadow-glow-sm hover:shadow-glow focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2;
+  }
+
+  /* Ghost button */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-transparent hover:bg-slate-100 dark:hover:bg-white/10 text-ink-secondary-l dark:text-ink-secondary-d font-medium text-sm px-3 py-2 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-brand-400;
+  }
+
+  /* Input field */
+  .input-field {
+    @apply w-full rounded-xl border border-slate-200 dark:border-surface-border-d bg-white dark:bg-surface-overlay-d px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all duration-150;
+  }
+
+  /* Sidebar nav item */
+  .sidebar-item {
+    @apply flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-slate-100 transition-all duration-150 cursor-pointer;
+  }
+
+  .sidebar-item-active {
+    @apply bg-brand-50 dark:bg-brand-500/15 text-brand-700 dark:text-brand-300 border-l-2 border-brand-500;
+  }
+
+  /* Issue / Kanban card */
+  .issue-card {
+    @apply rounded-xl border border-slate-200 dark:border-surface-border-d bg-white dark:bg-surface-overlay-d p-3 shadow-card dark:shadow-card-dark hover:shadow-card-hover transition-all duration-150 cursor-pointer;
+  }
+
+  /* Status badge */
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold tracking-wide;
+  }
+
+  /* Priority dot */
+  .priority-dot {
+    @apply h-2 w-2 rounded-full inline-block;
+  }
+
+  /* Section label */
+  .section-label {
+    @apply text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600 px-2 mb-1;
+  }
+  
+  /* Shimmer skeleton */
+  .skeleton {
+    @apply bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 bg-[length:200%_100%] animate-shimmer rounded-lg;
+  }
 }
 
-/* Custom Scrollbar */
+/* ───────────────────────────────────────────────────────────────────────────
+   Custom scrollbar
+   ──────────────────────────────────────────────────────────────────────────*/
 .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: #9ca3af #e5e7eb;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 10px;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #334155;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Utility helpers
+   ──────────────────────────────────────────────────────────────────────────*/
+@layer utilities {
+  .text-gradient-brand {
+    @apply bg-clip-text text-transparent bg-brand-gradient;
   }
-  
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
+
+  .glow-ring {
+    @apply ring-2 ring-brand-500/40 ring-offset-1;
   }
-  
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: #e5e7eb;
-    border-radius: 10px;
+
+  .blur-backdrop {
+    @apply backdrop-blur-md;
   }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #9ca3af;
-    border-radius: 10px;
-    border: 2px solid #e5e7eb;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: #6b7280;
-  }
-  
+}

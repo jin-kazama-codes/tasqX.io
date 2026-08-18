@@ -8,7 +8,11 @@ import { getBaseUrl } from "@/utils/helpers";
 const prisma = new PrismaClient();
 
 export async function GET() {
-  const { companyId } = parsePageCookies("user");
+  const user = parsePageCookies("user");
+  const companyId = user?.companyId;
+  if (!companyId) {
+    return NextResponse.json({ users: [] }, { status: 200 });
+  }
   try {
     const users = await prisma.defaultUser.findMany({
       where: {

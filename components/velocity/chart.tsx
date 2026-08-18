@@ -1,8 +1,11 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { timeStringToHours } from "@/utils/helpers";
 import { useCookie } from "@/hooks/use-cookie";
+import { HiOutlineChartBar, HiOutlineCalendar } from "react-icons/hi2";
 
 const VelocityChart = () => {
   const [chartOptions, setChartOptions] = useState({});
@@ -12,39 +15,38 @@ const VelocityChart = () => {
   const [selectedYear, setSelectedYear] = useState("");
   const [selectedQuarter, setSelectedQuarter] = useState("");
   const [theme, setTheme] = useState(
-    document.documentElement.classList.contains("dark") ? "dark" : "light"
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark") ? "dark" : "light"
   );
 
-  const projectName = useCookie("project").name;
+  const projectName = useCookie("project")?.name || "Project";
 
-  const getQuarter = (date) => Math.floor(date.getMonth() / 3) + 1;
+  const getQuarter = (date: Date) => Math.floor(date.getMonth() / 3) + 1;
 
   const fetchSprints = async () => {
     try {
       const response = await fetch("/api/sprints?closed=true");
       const data = await response.json();
-  
+
       if (!data.sprints || data.sprints.length === 0) {
         setSprintData([]);
         return;
       }
-  
-      const sprintYearsSet = new Set();
-      const sprintQuartersMap = {}; // Store quarters per year
-  
-      const processedSprints = data.sprints.map((sprint) => {
+
+      const sprintYearsSet = new Set<number>();
+      const sprintQuartersMap: Record<number, Set<number>> = {};
+
+      const processedSprints = data.sprints.map((sprint: any) => {
         const updatedAt = new Date(sprint.updatedAt);
         const year = updatedAt.getFullYear();
         const quarter = getQuarter(updatedAt);
-  
+
         sprintYearsSet.add(year);
-  
-        // Ensure the year key exists in sprintQuartersMap
+
         if (!sprintQuartersMap[year]) {
           sprintQuartersMap[year] = new Set();
         }
-        sprintQuartersMap[year].add(quarter); // Store quarters per year
-  
+        sprintQuartersMap[year].add(quarter);
+
         return {
           ...sprint,
           estimatedHours: timeStringToHours(sprint.estimateTime),
@@ -53,19 +55,19 @@ const VelocityChart = () => {
           quarter,
         };
       });
-  
-      setYears([...sprintYearsSet].sort((a, b) => b - a));
-  
-      // Default to the latest year and its available quarters
-      const latestYear = [...sprintYearsSet][0];
-      setSelectedYear(latestYear.toString());
-      
+
+      const sortedYears = [...sprintYearsSet].sort((a, b) => b - a);
+      setYears(sortedYears as any);
+
+      const latestYear = sortedYears[0];
+      setSelectedYear(latestYear ? latestYear.toString() : "");
+
       if (latestYear) {
         const latestQuarters = [...sprintQuartersMap[latestYear]].sort((a, b) => b - a);
-        setQuarters(latestQuarters);
-        setSelectedQuarter(latestQuarters[0]?.toString() || ""); // Set latest quarter if available
+        setQuarters(latestQuarters as any);
+        setSelectedQuarter(latestQuarters[0]?.toString() || "");
       }
-  
+
       setSprintData(processedSprints);
     } catch (error) {
       console.error("Error fetching sprint data:", error);
@@ -74,29 +76,27 @@ const VelocityChart = () => {
 
   useEffect(() => {
     if (selectedYear && sprintData.length > 0) {
-      const filteredQuarters = [...new Set(
-        sprintData
-          .filter((sprint) => sprint.year.toString() === selectedYear)
-          .map((sprint) => sprint.quarter)
-      )].sort((a, b) => b - a);
-  
-      setQuarters(filteredQuarters);
+      const filteredQuarters = [
+        ...new Set(
+          sprintData
+            .filter((sprint: any) => sprint.year.toString() === selectedYear)
+            .map((sprint: any) => sprint.quarter)
+        ),
+      ].sort((a: any, b: any) => b - a);
+
+      setQuarters(filteredQuarters as any);
       setSelectedQuarter(filteredQuarters[0]?.toString() || "");
     }
   }, [selectedYear, sprintData]);
-  
-  
 
   useEffect(() => {
     fetchSprints();
 
-    // Listen for theme changes
     const observer = new MutationObserver(() => {
       setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
     });
 
     observer.observe(document.documentElement, { attributes: true });
-
     return () => observer.disconnect();
   }, []);
 
@@ -105,7 +105,7 @@ const VelocityChart = () => {
 
     const isDarkMode = theme === "dark";
 
-    const filteredSprints = sprintData.filter((sprint) => {
+    const filteredSprints = sprintData.filter((sprint: any) => {
       const matchYear = selectedYear ? sprint.year.toString() === selectedYear : true;
       const matchQuarter = selectedQuarter ? sprint.quarter.toString() === selectedQuarter : true;
       return matchYear && matchQuarter;
@@ -114,94 +114,111 @@ const VelocityChart = () => {
     setChartOptions({
       chart: {
         type: "column",
-        backgroundColor: isDarkMode ? "#1E293B" : "#FFFFFF",
+        backgroundColor: "transparent",
+        style: { fontFamily: "inherit" },
       },
       title: {
-        text: `${projectName} Velocity Report - ${selectedYear} Q${selectedQuarter}`,
-        style: { color: isDarkMode ? "#E5E7EB" : "#1F2937" },
+        text: `${projectName} Velocity — ${selectedYear} Q${selectedQuarter}`,
+        style: {
+          color: isDarkMode ? "#F1F5F9" : "#0F172A",
+          fontSize: "15px",
+          fontWeight: "700",
+        },
       },
       xAxis: {
-        categories: filteredSprints.map((sprint) => sprint.name),
-        title: { text: "Sprints" },
-        labels: { style: { color: isDarkMode ? "#E5E7EB" : "#1F2937" } },
+        categories: filteredSprints.map((sprint: any) => sprint.name),
+        labels: { style: { color: isDarkMode ? "#94A3B8" : "#64748B" } },
+        lineColor: isDarkMode ? "#334155" : "#E2E8F0",
       },
       yAxis: {
-        title: { text: "Time (Hours)" },
-        labels: { style: { color: isDarkMode ? "#E5E7EB" : "#1F2937" } },
-        gridLineColor: isDarkMode ? "#374151" : "#E5E7EB",
+        title: {
+          text: "Hours Logged",
+          style: { color: isDarkMode ? "#94A3B8" : "#64748B" },
+        },
+        labels: { style: { color: isDarkMode ? "#94A3B8" : "#64748B" } },
+        gridLineColor: isDarkMode ? "rgba(51, 65, 85, 0.4)" : "rgba(226, 232, 240, 0.8)",
       },
       legend: {
         enabled: true,
-        align: "right",
-        verticalAlign: "top",
-        layout: "vertical",
-        itemStyle: { color: isDarkMode ? "#E5E7EB" : "#1F2937" },
+        itemStyle: { color: isDarkMode ? "#E2E8F0" : "#334155" },
       },
       series: [
         {
           name: "Estimated Time",
-          color: isDarkMode ? "rgba(158, 159, 163, 0.8)" : "rgba(158, 159, 163, 0.5)",
-          data: filteredSprints.map((sprint) => sprint.estimatedHours),
+          color: isDarkMode ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.3)",
+          borderColor: "#6366F1",
+          borderRadius: 6,
+          data: filteredSprints.map((sprint: any) => sprint.estimatedHours),
         },
         {
-          name: "Time Logged",
-          color: isDarkMode ? "#4ADE80" : "#1a9c50",
-          data: filteredSprints.map((sprint) => sprint.actualHours),
+          name: "Actual Time Logged",
+          color: "#10B981",
+          borderRadius: 6,
+          data: filteredSprints.map((sprint: any) => sprint.actualHours),
         },
       ],
+      credits: { enabled: false },
     });
   }, [sprintData, selectedYear, selectedQuarter, theme]);
 
   return (
-    <div className="flex flex-col gap-4 h-[80vh]">
-      <div className={`${sprintData.length ? "flex-1 w-3/4 mx-auto" : "flex items-center justify-center h-[90vh]"}`}>
-        {sprintData.length > 0 ? (
-          <>
-            <div className="flex gap-4 px-4 justify-center mb-4">
-              <div className="flex items-center gap-2">
-                <label htmlFor="year" className="font-medium text-sm dark:text-gray-200">
-                  Year:
-                </label>
-                <select
-                  id="year"
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  className="px-3 py-1.5 bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {years.map((year) => (
-                    <option key={year} value={year.toString()}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <label htmlFor="quarter" className="font-medium text-sm dark:text-gray-200">
-                  Quarter:
-                </label>
-                <select
-                  id="quarter"
-                  value={selectedQuarter}
-                  onChange={(e) => setSelectedQuarter(e.target.value)}
-                  className="px-3 py-1.5 bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {quarters.map((quarter) => (
-                    <option key={quarter} value={quarter.toString()}>
-                      Q{quarter}
-                    </option>
-                  ))}
-                </select>
-              </div>
+    <div className="rounded-2xl border border-slate-200/80 dark:border-surface-border-d bg-white dark:bg-surface-raised-d shadow-card p-6">
+      {sprintData.length > 0 ? (
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <HiOutlineCalendar className="h-4 w-4 text-slate-400" />
+              <label htmlFor="year-select" className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                Year:
+              </label>
+              <select
+                id="year-select"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="input-field text-xs font-semibold py-1 px-2.5 bg-white dark:bg-surface-overlay-d"
+              >
+                {years.map((year) => (
+                  <option key={year} value={year.toString()}>
+                    {year}
+                  </option>
+                ))}
+              </select>
             </div>
-            <HighchartsReact highcharts={Highcharts} options={chartOptions} />
-          </>
-        ) : (
-          <p className="text-center text-gray-800 dark:text-dark-50">
-            Complete your first sprint to view this report
+
+            <div className="flex items-center gap-2">
+              <label htmlFor="quarter-select" className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                Quarter:
+              </label>
+              <select
+                id="quarter-select"
+                value={selectedQuarter}
+                onChange={(e) => setSelectedQuarter(e.target.value)}
+                className="input-field text-xs font-semibold py-1 px-2.5 bg-white dark:bg-surface-overlay-d"
+              >
+                {quarters.map((quarter) => (
+                  <option key={quarter} value={quarter.toString()}>
+                    Q{quarter}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <HighchartsReact highcharts={Highcharts} options={chartOptions} />
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-500 mb-4 border border-emerald-500/20 shadow-xs">
+            <HiOutlineChartBar className="h-8 w-8" />
+          </div>
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+            No Velocity Data Available
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1">
+            Complete sprints with estimated and logged hours to generate sprint velocity comparisons and team capacity metrics.
           </p>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

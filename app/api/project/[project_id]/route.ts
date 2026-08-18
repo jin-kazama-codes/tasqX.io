@@ -11,19 +11,23 @@ export async function GET(
   { params }: { params: { projectKey: string } }
 ) {
   try {
-    const { project_id: projectKey } = params;
+    const { project_id } = params;
 
-    if (!projectKey) {
+    if (!project_id) {
       return NextResponse.json(
-        { error: "Project key is required" },
+        { error: "Project key or ID is required" },
         { status: 400 }
       );
     }
 
-    // Fetch project by key
-    const project = await prisma.project.findUnique({
-      where: { key: projectKey },
-    });
+    const isNumeric = !isNaN(Number(project_id));
+    const project = isNumeric
+      ? await prisma.project.findFirst({
+          where: { OR: [{ id: parseInt(project_id) }, { key: project_id }] },
+        })
+      : await prisma.project.findFirst({
+          where: { key: project_id },
+        });
 
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });

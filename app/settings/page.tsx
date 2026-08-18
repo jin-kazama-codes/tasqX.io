@@ -1,11 +1,21 @@
 "use client";
+
 import React, { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import axios from "axios";
 import { useCookie } from "@/hooks/use-cookie";
 import { useRouter } from "next/navigation";
 import { setCookie } from "@/utils/helpers";
 import withProjectLayout from "@/app/project-layout/withProjectLayout";
-import Link from "next/link";
+import {
+  HiOutlineCog6Tooth,
+  HiOutlineDocumentText,
+  HiOutlineCalendarDays,
+  HiOutlineArrowTopRightOnSquare,
+  HiOutlineCheckCircle,
+  HiOutlineExclamationCircle,
+  HiOutlineDocumentDuplicate,
+  HiOutlineUserGroup,
+} from "react-icons/hi2";
 
 const UpdateProject: React.FC = () => {
   const [isMounted, setIsMounted] = useState(false);
@@ -13,28 +23,30 @@ const UpdateProject: React.FC = () => {
     projectId: "",
     name: "",
     cloneChild: false,
-    workingDays: 5, // Default to 5 working days, stored as an integer
+    workingDays: 5,
     showAssignedTasks: false,
   });
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-    const projectId = useCookie("project").id;
-    const name = useCookie("project").name;
-    const cloneChild = useCookie("project").cloneChild;
-    const { showAssignedTasks } = useCookie("project");
-    const workingDays = parseInt(useCookie("project").workingDays, 10) || 5;
+    const project = useCookie("project");
+    const projectId = project?.id;
+    const name = project?.name;
+    const cloneChild = project?.cloneChild;
+    const showAssignedTasks = project?.showAssignedTasks;
+    const workingDays = parseInt(project?.workingDays, 10) || 5;
     if (projectId && name) {
       setFormData((prevData) => ({
         ...prevData,
         projectId,
         name,
-        cloneChild,
+        cloneChild: !!cloneChild,
         workingDays,
-        showAssignedTasks,
+        showAssignedTasks: !!showAssignedTasks,
       }));
     } else {
       setError("Project not found in cookies");
@@ -44,7 +56,8 @@ const UpdateProject: React.FC = () => {
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
     setFormData((prevData) => ({
       ...prevData,
       [name]:
@@ -54,16 +67,19 @@ const UpdateProject: React.FC = () => {
           ? parseInt(value, 10)
           : value,
     }));
+    if (error) setError(null);
+    if (success) setSuccess(null);
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
+    setSuccess(null);
+
     try {
       const response = await axios.patch("/api/auth/login", formData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
 
       if (response.status === 200 && isMounted) {
@@ -76,140 +92,176 @@ const UpdateProject: React.FC = () => {
           key: updatedProject.key,
           showAssignedTasks: updatedProject.showAssignedTasks,
         });
-        router.push("/backlog");
+        setSuccess("Project settings saved successfully!");
       } else {
-        setLoading(false);
         setError(response.data.error || "Update failed");
       }
     } catch (error: any) {
-      setLoading(false);
       if (error.response) {
         setError(error.response.data.error || "Update failed");
       } else {
         setError("An error occurred during the update");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!isMounted) {
-    return null;
-  }
+  if (!isMounted) return null;
 
   return (
-    <div className="container mx-auto my-12 max-w-md rounded-xl bg-header dark:bg-darkSprint-10">
-      <div className=" my-5">
-        <div className="rounded-t-xl py-5 text-center ">
-          <h1 className="text-3xl font-bold tracking-tight text-white">
-            Update Project
+    <div className="p-6 max-w-2xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-500/10 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 border border-brand-500/20 shadow-xs">
+          <HiOutlineCog6Tooth className="h-6 w-6" />
+        </div>
+        <div>
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+            Project Settings
           </h1>
-          <p className="text-muted-foreground text-lg text-white">
-            Enter the new project details below.
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Configure workspace preferences, rules, and workflow configuration
           </p>
         </div>
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-xl bg-white p-6 pt-5 shadow-lg dark:bg-darkSprint-20"
-        >
-          <div className="grid gap-4">
-            <div className="flex flex-col">
-              <label
-                htmlFor="name"
-                className="text-sm font-medium dark:text-dark-50"
-              >
-                New Project Name
-              </label>
+      </div>
+
+      {/* Settings Form Card */}
+      <div className="rounded-2xl border border-slate-200/80 dark:border-surface-border-d bg-white dark:bg-surface-raised-d shadow-card overflow-hidden">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Project Name */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="name"
+              className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Project Name
+            </label>
+            <div className="relative flex items-center">
+              <HiOutlineDocumentText className="absolute left-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
               <input
                 id="name"
                 name="name"
                 type="text"
-                placeholder="Enter new project name"
-                className="focus:border-primary focus:ring-primary mt-3 rounded-xl border border-gray-300 bg-gray-200 px-3 py-2 dark:border-darkSprint-20 dark:bg-darkSprint-30 dark:text-white dark:placeholder:text-darkSprint-50"
-                onChange={handleChange}
+                style={{ paddingLeft: "2.75rem" }}
+                className="input-field text-sm w-full py-2.5"
+                placeholder="Enter project name"
                 value={formData.name}
+                onChange={handleChange}
                 required
               />
             </div>
+          </div>
 
-            {/* New Checkbox for cloneChild */}
-            <div className="mt-2 flex justify-between">
-              <div className="flex items-center space-x-2">
-                <input
-                  id="cloneChild"
-                  name="cloneChild"
-                  type="checkbox"
-                  className="h-5 w-5"
-                  checked={formData.cloneChild}
-                  onChange={handleChange}
-                />
-                <label
-                  htmlFor="cloneChild"
-                  className="text-sm font-medium dark:text-dark-50"
-                >
-                  Clone Child Issues
-                </label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input
-                  id="showAssignedTasks"
-                  name="showAssignedTasks"
-                  type="checkbox"
-                  className="h-5 w-5"
-                  checked={formData.showAssignedTasks}
-                  onChange={handleChange}
-                />
-                <label
-                  htmlFor="showAssignedTasks"
-                  className="text-sm font-medium dark:text-dark-50"
-                >
-                  Show Only Assigned Tasks
-                </label>
-              </div>
-            </div>
-
-            {/* New Select for Working Days */}
-            <div className="mt-2 flex flex-col">
-              <label
-                htmlFor="workingDays"
-                className="text-sm font-medium dark:text-dark-50"
-              >
-                Working Days
-              </label>
+          {/* Working Days */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="workingDays"
+              className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Working Days per Week
+            </label>
+            <div className="relative flex items-center">
+              <HiOutlineCalendarDays className="absolute left-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
               <select
                 id="workingDays"
                 name="workingDays"
-                className="focus:border-primary focus:ring-primary mt-3 rounded-xl border border-gray-300 bg-gray-200 px-3 py-2 dark:border-darkSprint-20 dark:bg-darkSprint-30 dark:text-white dark:placeholder:text-darkSprint-50"
-                onChange={handleChange}
+                style={{ paddingLeft: "2.75rem" }}
+                className="input-field text-sm w-full py-2.5 bg-white dark:bg-surface-raised-d"
                 value={formData.workingDays}
+                onChange={handleChange}
               >
-                <option value={5}>5 Days</option>
-                <option value={6}>6 Days</option>
+                <option value={5}>5 Days (Monday – Friday)</option>
+                <option value={6}>6 Days (Monday – Saturday)</option>
+                <option value={7}>7 Days (All Week)</option>
               </select>
             </div>
           </div>
 
-          {error && <p className="mt-2 text-red-500">{error}</p>}
-          <div className="mt-4 flex gap-x-4">
+          {/* Feature Preferences / Toggles */}
+          <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-surface-border-d">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+              Preferences
+            </label>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Clone Subtasks toggle */}
+              <label className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-surface-border-d bg-slate-50/50 dark:bg-surface-overlay-d/40 hover:bg-slate-50 dark:hover:bg-surface-overlay-d cursor-pointer transition-colors">
+                <input
+                  id="cloneChild"
+                  name="cloneChild"
+                  type="checkbox"
+                  checked={formData.cloneChild}
+                  onChange={handleChange}
+                  className="h-4 w-4 rounded accent-brand-500 cursor-pointer"
+                />
+                <div className="flex items-center gap-2">
+                  <HiOutlineDocumentDuplicate className="h-4 w-4 text-slate-400" />
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Clone Subtasks
+                  </span>
+                </div>
+              </label>
+
+              {/* Show assigned tasks toggle */}
+              <label className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-surface-border-d bg-slate-50/50 dark:bg-surface-overlay-d/40 hover:bg-slate-50 dark:hover:bg-surface-overlay-d cursor-pointer transition-colors">
+                <input
+                  id="showAssignedTasks"
+                  name="showAssignedTasks"
+                  type="checkbox"
+                  checked={formData.showAssignedTasks}
+                  onChange={handleChange}
+                  className="h-4 w-4 rounded accent-brand-500 cursor-pointer"
+                />
+                <div className="flex items-center gap-2">
+                  <HiOutlineUserGroup className="h-4 w-4 text-slate-400" />
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Show Assigned Only
+                  </span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Feedback banners */}
+          {error && (
+            <div className="flex items-center gap-2 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 px-3.5 py-2.5 text-xs text-red-600 dark:text-red-400 animate-fade-in">
+              <HiOutlineExclamationCircle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+          {success && (
+            <div className="flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-3.5 py-2.5 text-xs text-emerald-600 dark:text-emerald-400 animate-fade-in">
+              <HiOutlineCheckCircle className="h-4 w-4 shrink-0" />
+              <span>{success}</span>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-slate-100 dark:border-surface-border-d">
             <button
-              onClick={(e) => {
-                e.preventDefault();
-                router.push("/workflow");
-              }}
-              className="mt-2 flex-1 rounded-xl border border-button bg-transparent py-3 text-lg font-medium text-button shadow-sm transition duration-200 ease-in-out hover:border-buttonHover hover:text-buttonHover focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 dark:border-2 dark:border-dark-0 dark:text-dark-0"
+              type="button"
+              onClick={() => router.push("/workflow")}
+              className="btn-secondary w-full sm:w-auto py-2.5 px-4 text-xs font-semibold inline-flex items-center justify-center gap-1.5"
             >
-              View Workflow
+              <span>View Workflow</span>
+              <HiOutlineArrowTopRightOnSquare className="h-3.5 w-3.5" />
             </button>
 
-            {loading ? (
-              <div className="h-10 w-10 animate-spin rounded-full border-4 border-t-4 border-gray-200 border-t-black"></div>
-            ) : (
-              <button
-                type="submit"
-                className="flex-1 rounded-xl border border-transparent bg-button py-2 text-lg font-medium text-white shadow-sm transition duration-200 ease-in-out hover:bg-buttonHover focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 dark:!bg-dark-0"
-              >
-                Update Project
-              </button>
-            )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-brand w-full sm:flex-1 py-2.5 text-xs font-semibold inline-flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <span>Saving changes…</span>
+                </>
+              ) : (
+                <span>Save Project Settings</span>
+              )}
+            </button>
           </div>
         </form>
       </div>

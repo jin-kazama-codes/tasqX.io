@@ -77,7 +77,7 @@ const BacklogListHeader: React.FC<{ issues: IssueType[] }> = ({ issues }) => {
               Backlog
             </div>
             <div className="ml-3 font-normal text-gray-800 dark:text-darkSprint-50">
-              ({issues.length ? issues.length : 0} issue{getPluralEnd(issues)})
+              ({issues.length ? issues.length : 0} {issues.length === 1 ? "task" : "tasks"})
             </div>
             {convertedOriginalEstimate ? (
               <span className="dark:text-darkSprint-50">
@@ -93,12 +93,12 @@ const BacklogListHeader: React.FC<{ issues: IssueType[] }> = ({ issues }) => {
       <div className="flex items-center gap-x-2 py-2">
         <Timelist Time={convertedTotalTime} />
         {(user?.role === "admin" || user?.role === "manager") && (
-          <Button
+          <button
             onClick={handleCreateSprint}
-            className="rounded-xl  !bg-button px-4 !text-white hover:!bg-buttonHover  dark:!bg-dark-0"
+            className="flex items-center rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-brand-500 dark:hover:bg-brand-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-all duration-150"
           >
-            <span className="whitespace-nowrap text-white ">Create Sprint</span>
-          </Button>
+            <span className="whitespace-nowrap">Create Sprint</span>
+          </button>
         )}
       </div>
     </div>

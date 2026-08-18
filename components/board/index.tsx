@@ -44,20 +44,22 @@ import { useSelectedIssueContext } from "@/context/use-selected-issue-context";
 import { useWorkflow } from "@/hooks/query-hooks/use-workflow";
 import { Container } from "../ui/container";
 
-// const STATUSES: IssueStatus[] = ["TODO", "IN_PROGRESS", "DONE"];
+const DEFAULT_STATUSES = ["TODO", "IN_PROGRESS", "DONE"];
 
 const Board: React.FC = () => {
   const renderContainerRef = useRef<HTMLDivElement>(null);
 
   const { sprints, sprintsLoading } = useSprints();
   const { data: workflow, isLoading, isError } = useWorkflow();
-  const [STATUSES, setStatuses] = useState([]);
+  const [STATUSES, setStatuses] = useState<string[]>(DEFAULT_STATUSES);
   const [statusColors, setStatusColors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (workflow) {
-      const labels = workflow.nodes.map((node) => node.data.label);
+    if (workflow && workflow.nodes && workflow.nodes.length > 0) {
+      const labels = workflow.nodes.map((node: any) => node.data.label);
       setStatuses(labels);
+    } else {
+      setStatuses(DEFAULT_STATUSES);
     }
   }, [workflow]);
 
@@ -65,7 +67,8 @@ const Board: React.FC = () => {
   const project = useCookie("project");
 
   useEffect(() => {
-    const projectId = project.id; // Adjust based on your project object structure
+    const projectId = project?.id;
+    if (!projectId) return;
     const storageKey = `statusColors-${projectId}`;
     const savedColors = localStorage.getItem(storageKey);
     const colorMap: Record<string, string> = savedColors
@@ -73,9 +76,9 @@ const Board: React.FC = () => {
       : {};
 
     let needsUpdate = false;
-    workflow?.nodes.forEach((node) => {
-      const statusLabel = node.data.label;
-      if (["To Do", "In Progress", "Done"].includes(statusLabel)) return;
+    workflow?.nodes?.forEach((node: any) => {
+      const statusLabel = node.data?.label;
+      if (["TODO", "IN_PROGRESS", "DONE", "To Do", "In Progress", "Done"].includes(statusLabel)) return;
       if (!colorMap[statusLabel]) {
         colorMap[statusLabel] = generatePastelColor();
         needsUpdate = true;
@@ -87,7 +90,7 @@ const Board: React.FC = () => {
     }
 
     setStatusColors(colorMap);
-  }, [workflow]);
+  }, [workflow, project?.id]);
 
   const getStatusBackgroundColor = (status: string): string => {
     switch (status) {
@@ -173,20 +176,26 @@ const Board: React.FC = () => {
     return null;
   }
 
-  if (issuesLoading)
+  if (issuesLoading || sprintsLoading) {
     return (
-      <div>
-        {" "}
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-t-4 border-gray-200 border-t-black" />
+      <div className="flex gap-4 pt-4 overflow-x-auto animate-fade-in">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="flex flex-col w-[320px] shrink-0 rounded-2xl border border-slate-200/80 dark:border-surface-border-d bg-slate-50/70 dark:bg-surface-raised-d/60 p-3 space-y-3"
+          >
+            <div className="flex items-center justify-between pb-2">
+              <div className="skeleton h-4 w-24 rounded-lg" />
+              <div className="skeleton h-4 w-6 rounded-full" />
+            </div>
+            {[0, 1, 2].map((j) => (
+              <div key={j} className="skeleton h-24 w-full rounded-xl" />
+            ))}
+          </div>
+        ))}
       </div>
     );
-  if (sprintsLoading)
-    return (
-      <div>
-        {" "}
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-t-4 border-gray-200 border-t-black" />
-      </div>
-    );
+  }
   // if (isError) {
   //   return <div>Error: {error?.message || "Failed to load data"}</div>;
   // }

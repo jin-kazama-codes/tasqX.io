@@ -1,59 +1,20 @@
-import { NotImplemented } from "@/components/not-implemented";
-import { ChildrenTreeIcon } from "@/components/svgs";
-import { Button } from "@/components/ui/button";
-import { TooltipWrapper } from "@/components/ui/tooltip";
-import { BiLink } from "react-icons/bi";
-import { BsThreeDots } from "react-icons/bs";
-
-
+import { HiOutlinePlus, HiOutlineSparkles } from "react-icons/hi2";
+import { type IssueType } from "@/utils/types";
 
 const IssueDetailsInfoActions: React.FC<{
   onAddChildIssue: () => void;
   variant?: "sm" | "lg";
+  issue?: IssueType;
 }> = ({ onAddChildIssue, variant = "sm" }) => {
-  
-
   return (
-    <div className="flex gap-x-2 text-gray-700">
-      {/* Attachment Button  */}
-
-      <TooltipWrapper text="Add child issue">
-        <Button
-          onClick={onAddChildIssue}
-          customColors
-          className="flex items-center whitespace-nowrap rounded-full dark:bg-darkSprint-30 dark:text-dark-50 bg-gray-100 hover:bg-gray-200"
-        >
-          <ChildrenTreeIcon />
-          <span
-            data-state={variant === "sm" ? "sm" : "lg"}
-            className="whitespace-nowrap text-sm  font-medium [&[data-state=lg]]:ml-2"
-          >
-            {variant === "sm" ? null : "Add a child issue"}
-          </span>
-        </Button>
-      </TooltipWrapper>
-      {/* <NotImplemented feature="link">
-        <Button
-          customColors
-          className="flex items-center whitespace-nowrap rounded-full bg-gray-100 hover:bg-gray-200"
-        >
-          <BiLink className="text-xl" />
-          <span
-            data-state={variant === "sm" ? "sm" : "lg"}
-            className="whitespace-nowrap text-sm  font-medium [&[data-state=lg]]:ml-2"
-          >
-            {variant === "sm" ? null : "Link issue"}
-          </span>
-        </Button>
-      </NotImplemented> */}
-      {/* <NotImplemented feature="add apps">
-        <Button
-          customColors
-          className="flex items-center whitespace-nowrap rounded-full bg-gray-100 hover:bg-gray-200"
-        >
-          <BsThreeDots className="text-xl" />
-        </Button>
-      </NotImplemented> */}
+    <div className="flex items-center gap-2">
+      <button
+        onClick={onAddChildIssue}
+        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-surface-border-d bg-white dark:bg-surface-raised-d px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-brand-300 dark:hover:border-brand-500/50 hover:bg-slate-50 dark:hover:bg-surface-overlay-d transition-all duration-150 shadow-2xs"
+      >
+        <HiOutlinePlus className="h-3.5 w-3.5 text-brand-500" />
+        <span>Add subtask</span>
+      </button>
     </div>
   );
 };

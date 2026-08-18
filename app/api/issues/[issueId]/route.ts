@@ -3,9 +3,7 @@ import { prisma } from "@/server/db";
 import { type Issue, IssueType, type DefaultUser } from "@prisma/client";
 import { z } from "zod";
 import { type GetIssuesResponse } from "../route";
-import { filterUserForClient, getBaseUrl } from "@/utils/helpers";
 import { parseCookies } from "@/utils/cookies";
-import { getQueryClient } from "@/utils/get-query-client";
 
 export type GetIssueDetailsResponse = {
   issue: GetIssuesResponse["issues"][number] | null;
@@ -17,15 +15,23 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { issueId: string } }
 ) {
-  const projectId = parseCookies(req, "project").id
+  const projectCookie = parseCookies(req, "project");
+  const projectId = projectCookie?.id;
   const { issueId } = params;
 
+  if (!issueId) {
+    return NextResponse.json({ error: "Issue ID/Key is required" }, { status: 400 });
+  }
+
   try {
-    // Fetch the main issue
+    const numericProjectId =
+      projectId && !isNaN(Number(projectId)) ? parseInt(String(projectId)) : undefined;
+
+    // Fetch the main issue by key or by id
     const issue = await prisma.issue.findFirst({
       where: {
-        key: issueId,
-        projectId
+        OR: [{ key: issueId }, { id: issueId }],
+        ...(numericProjectId ? { projectId: numericProjectId } : {}),
       },
     });
 
@@ -58,7 +64,7 @@ export async function GET(
       ...issue,
       children: childIssues,
       sprint,
-      assignee
+      assignee,
     };
 
     return NextResponse.json({ issue: issueWithChildren }, { status: 200 });
@@ -100,98 +106,48 @@ type ParamsType = {
 };
 
 export async function PATCH(req: NextRequest, { params }: ParamsType) {
-  const userId = parseCookies(req, "user").id;
-  const { id: projectId, key: projectKey } = parseCookies(req, "project");
-  const baseUrl = getBaseUrl();
+  const userCookie = parseCookies(req, "user");
+  const userId = userCookie?.id;
+  const projectCookie = parseCookies(req, "project");
+  const projectId = projectCookie?.id;
 
   if (!userId) return new Response("Unauthenticated request", { status: 403 });
-  // const { success } = await ratelimit.limit(userId);
-  // if (!success) return new Response("Too many requests", { status: 429 });
+
   const { issueId } = params;
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const body = await req.json();
-  const validated = patchIssueBodyValidator.safeParse(body);
 
-  if (!validated.success) {
-    // eslint-disable-next-line
-    const message = "Invalid body. " + validated.error.errors[0]?.message ?? "";
-    return new Response(message, { status: 400 });
-  }
-  const { data: valid } = validated;
+  try {
+    const json = await req.json();
+    const body = patchIssueBodyValidator.parse(json);
 
-  const currentIssue = await prisma.issue.findUnique({
-    where: {
-      id: issueId,
-    },
-  });
-
-  if (!currentIssue) {
-    return new Response("Issue not found", { status: 404 });
-  }
-
-  const issue = await prisma.issue.update({
-    where: {
-      id: issueId,
-    },
-    data: {
-      name: valid.name ?? undefined,
-      description: valid.description ?? undefined,
-      status: valid.status ?? undefined,
-      type: valid.type ?? undefined,
-      sprintPosition: valid.sprintPosition ?? undefined,
-      assigneeId: valid.assigneeId === undefined ? undefined : valid.assigneeId,
-      reporterId: valid.reporterId ?? undefined,
-      isDeleted: valid.isDeleted ?? undefined,
-      sprintId: valid.sprintId === undefined ? undefined : valid.sprintId,
-      parentId: valid.parentId === undefined ? undefined : valid.parentId,
-      projectId: projectId,
-      estimateTime:
-        valid.estimateTime === undefined ? undefined : valid.estimateTime,
-      timeSpent: valid.timeSpent === undefined ? undefined : valid.timeSpent,
-      sprintColor: valid.sprintColor ?? undefined,
-      boardPosition: valid.boardPosition ?? undefined,
-    },
-  });
-
-  if (issue.assigneeId) {
-    const assignee = await prisma.defaultUser.findUnique({
+    // Find the issue to update by id or key
+    const existingIssue = await prisma.issue.findFirst({
       where: {
-        id: issue.assigneeId,
+        OR: [{ id: issueId }, { key: issueId }],
       },
     });
-    const assigneeForClient = filterUserForClient(assignee);
-    const issueUrl = `${baseUrl}/${projectKey}/issue/${issue.key}`;
-    return NextResponse.json({
-      issue: { ...issue, assignee: assigneeForClient, issueUrl: issueUrl },
+
+    if (!existingIssue) {
+      return NextResponse.json({ error: "Issue not found" }, { status: 404 });
+    }
+
+    const updatedIssue = await prisma.issue.update({
+      where: {
+        id: existingIssue.id,
+      },
+      data: {
+        ...body,
+      },
+      include: {
+        assignee: true,
+      },
     });
+
+    return NextResponse.json({ issue: updatedIssue }, { status: 200 });
+  } catch (error) {
+    console.error("Error updating issue:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
-
-  // return NextResponse.json<PostIssueResponse>({ issue });
-  return NextResponse.json({
-    issue: { ...issue, assignee: null },
-  });
-}
-
-export async function DELETE(req: NextRequest, { params }: ParamsType) {
-  const userId = parseCookies(req, "user").id;
-  if (!userId) return new Response("Unauthenticated request", { status: 403 });
-  // const { success } = await ratelimit.limit(userId);
-  // if (!success) return new Response("Too many requests", { status: 429 });
-
-  const { issueId } = params;
-
-  const issue = await prisma.issue.update({
-    where: {
-      id: issueId,
-    },
-    data: {
-      isDeleted: true,
-      boardPosition: -1,
-      sprintPosition: -1,
-      sprintId: "DELETED-SPRINT-ID",
-    },
-  });
-
-  // return NextResponse.json<PostIssueResponse>({ issue });
-  return NextResponse.json({ issue });
 }

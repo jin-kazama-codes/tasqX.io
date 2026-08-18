@@ -79,8 +79,8 @@ export async function initProject() {
     update: {},
     create: {
       id: "init-project-id-dq8yh-d0as89hjd",
-      name: "F2 Fin Operations",
-      key: "KARYA-IO",
+      name: "TasqX Platform",
+      key: "TASQX",
     },
   });
 }

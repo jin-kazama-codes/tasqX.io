@@ -1,10 +1,8 @@
 import { MdClose } from "react-icons/md";
-
 import { IssueDropdownMenu } from "../issue-menu";
 import { DropdownTrigger } from "../../ui/dropdown-menu";
 import { IssuePath } from "../issue-path";
 import { type IssueType } from "@/utils/types";
-import { NotImplemented } from "@/components/not-implemented";
 import { Button } from "@/components/ui/button";
 import { BsThreeDots } from "react-icons/bs";
 import { useCookie } from "@/hooks/use-cookie";
@@ -17,49 +15,32 @@ const IssueDetailsHeader: React.FC<{
 }> = ({ issue, setIssueKey, isInViewport, detailPage }) => {
   const user = useCookie("user");
   if (!issue) return <div />;
+
   return (
-    <div
-      data-state={isInViewport ? "inViewport" : "notInViewport"}
-      className="sticky top-0 z-10 flex h-fit w-full items-center justify-between dark:text-dark-50 dark:bg-darkSprint-10 dark:border-darkSprint-30 border-transparent bg-white p-0.5 [&[data-state=notInViewport]]:border-b border-b-black"
-    >
+    <div className="sticky top-0 z-20 flex h-fit w-full items-center justify-between border-b border-slate-100 dark:border-surface-border-d bg-white/80 dark:bg-surface-raised-d/80 backdrop-blur-md px-6 py-3 transition-colors">
       <IssuePath issue={issue} setIssueKey={setIssueKey} />
-      <div className="relative flex items-center gap-x-0.5">
-        {/* <NotImplemented feature="watch">
-          <Button customColors className="bg-transparent rounded-full hover:bg-gray-200">
-            <MdRemoveRedEye className="text-xl" />
-          </Button>
-        </NotImplemented>
-        <NotImplemented feature="like">
-          <Button customColors className="bg-transparent rounded-full hover:bg-gray-200">
-            <AiOutlineLike className="text-xl" />
-          </Button>
-        </NotImplemented>
-        <NotImplemented feature="share">
-          <Button customColors className="bg-transparent rounded-full hover:bg-gray-200">
-            <MdOutlineShare className="text-xl" />
-          </Button>
-        </NotImplemented> */}
+      <div className="relative flex items-center gap-1">
         {(user?.role === "admin" || user?.role === "manager") && (
           <IssueDropdownMenu issue={issue}>
             <DropdownTrigger
               asChild
-              className="rounded-m flex h-fit items-center gap-x-2 bg-opacity-30 px-1.5 text-xs font-semibold focus:ring-2"
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-surface-overlay-d dark:hover:text-slate-100 transition-colors"
             >
-              <div className="invisible rounded-full px-1.5 py-1.5 text-gray-700 group-hover:visible group-hover:bg-slate-100 group-hover:hover:bg-slate-300 [&[data-state=open]]:visible [&[data-state=open]]:bg-slate-700 [&[data-state=open]]:text-white">
-                <BsThreeDots className="text-black sm:text-xl" />
-              </div>
+              <button aria-label="Task actions">
+                <BsThreeDots className="h-4 w-4" />
+              </button>
             </DropdownTrigger>
           </IssueDropdownMenu>
         )}
         {!detailPage && (
-          <Button
-            customColors
-            className="rounded-full dark:hover:bg-darkSprint-30 bg-transparent hover:bg-gray-200"
+          <button
             onClick={() => setIssueKey(null)}
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-surface-overlay-d dark:hover:text-slate-200 transition-colors"
+            aria-label="Close modal"
           >
-            <MdClose className="text-2xl" />
-          </Button>)
-        }
+            <MdClose className="h-5 w-5" />
+          </button>
+        )}
       </div>
     </div>
   );

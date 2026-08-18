@@ -2,7 +2,6 @@ import { Fragment, useEffect, useState } from "react";
 import { useIssues } from "@/hooks/query-hooks/use-issues";
 import { FaChevronDown } from "react-icons/fa";
 import clsx from "clsx";
-import { NotImplemented } from "@/components/not-implemented";
 import {
   Select,
   SelectContent,
@@ -19,6 +18,8 @@ import { useIsAuthenticated } from "@/hooks/use-is-authed";
 import { useWorkflow } from "@/hooks/query-hooks/use-workflow";
 import { useRouter } from "next/navigation";
 
+const DEFAULT_STATUSES = ["TODO", "IN_PROGRESS", "DONE"];
+
 const IssueSelectStatus: React.FC<{
   currentStatus: string;
   issueId: string;
@@ -26,14 +27,16 @@ const IssueSelectStatus: React.FC<{
   page?: string;
 }> = ({ currentStatus, issueId, variant = "sm", page = "backlog" }) => {
   const [selectedStatus, setSelectedStatus] = useState(currentStatus);
-  const { data: workflow, isLoading, isError, error } = useWorkflow();
-  const [Statuses, setStatuses] = useState([]);
+  const { data: workflow, isLoading } = useWorkflow();
+  const [statuses, setStatuses] = useState<string[]>(DEFAULT_STATUSES);
   const router = useRouter();
 
   useEffect(() => {
-    if (workflow) {
-      const labels = workflow.nodes.map((node) => node.data.label);
+    if (workflow && workflow.nodes && workflow.nodes.length > 0) {
+      const labels = workflow.nodes.map((node: any) => node.data.label);
       setStatuses(labels);
+    } else {
+      setStatuses(DEFAULT_STATUSES);
     }
   }, [workflow]);
 
@@ -52,10 +55,28 @@ const IssueSelectStatus: React.FC<{
     setSelectedStatus(value);
   }
 
-  if (isLoading) return <div>Loading...</div>;
-  if (isError) {
-    return <div>Error: {error?.message || "Failed to load data"}</div>;
-  }
+  const formatStatus = (s: string) => {
+    if (s === "TODO") return "To Do";
+    if (s === "IN_PROGRESS") return "In Progress";
+    if (s === "DONE") return "Done";
+    return s;
+  };
+
+  const getStatusBadgeStyle = (status: string) => {
+    switch (status) {
+      case "TODO":
+      case "To Do":
+        return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700";
+      case "IN_PROGRESS":
+      case "In Progress":
+        return "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/40";
+      case "DONE":
+      case "Done":
+        return "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40";
+      default:
+        return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700";
+    }
+  };
 
   return (
     <Fragment>
@@ -64,50 +85,55 @@ const IssueSelectStatus: React.FC<{
           onClick={(e) => e.stopPropagation()}
           disabled={isUpdating}
           className={clsx(
-            variant == "sm" &&
-              "border border-buttonHover bg-opacity-20 px-1.5 py-0.5 text-xs font-bold dark:border-darkSprint-30 dark:bg-darkSprint-20 dark:text-dark-50",
-            variant == "lg" &&
-              "my-1 border-2 border-buttonHover px-3 py-1.5 text-[16px] font-semibold dark:border-darkSprint-30 dark:bg-darkSprint-20 dark:text-dark-50",
-            isUpdating && "cursor-no1-allowed",
-            "flex items-center gap-x-2 whitespace-nowrap rounded-xl px-2 py-1"
+            "flex items-center gap-x-1.5 whitespace-nowrap rounded-lg border px-2.5 py-1 text-xs font-semibold transition-all duration-150",
+            getStatusBadgeStyle(selectedStatus),
+            isUpdating && "opacity-50 cursor-not-allowed"
           )}
         >
-          <SelectValue className="w-full whitespace-nowrap bg-transparent text-white">
-            {variant == "sm" ? selectedStatus : selectedStatus}
+          <SelectValue className="w-full whitespace-nowrap bg-transparent">
+            {formatStatus(selectedStatus)}
           </SelectValue>
           {page === "backlog" && (
             <SelectIcon>
-              <FaChevronDown className="text-xs" />
+              <FaChevronDown className="h-2.5 w-2.5 opacity-60 ml-0.5" />
             </SelectIcon>
           )}
         </SelectTrigger>
         <SelectPortal className="z-50">
           <SelectContent position="popper">
-            <SelectViewport className="w-60 rounded-md border border-buttonHover bg-white pt-2 shadow-md dark:border-darkSprint-30 dark:bg-darkSprint-20">
+            <SelectViewport className="w-48 rounded-xl border border-slate-200 bg-white dark:bg-surface-raised-d dark:border-surface-border-d p-1.5 shadow-modal">
               <SelectGroup>
-                {Statuses.map((status) => (
+                {statuses.map((status) => (
                   <SelectItem
                     key={status}
                     value={status}
-                    className={clsx(
-                      "border-l-[3px] border-transparent py-1 pl-2 text-sm hover:cursor-default hover:border-blue-600 hover:bg-gray-100 dark:hover:bg-darkSprint-30 dark:hover:text-white "
-                    )}
+                    className="flex items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-surface-overlay-d transition-colors cursor-pointer outline-none"
                   >
-                    <span className="rounded-md px-2 text-xs  font-semibold dark:text-dark-50">
-                      {status}
+                    <span className="flex items-center gap-1.5">
+                      <span
+                        className={clsx(
+                          "h-2 w-2 rounded-full",
+                          status === "TODO" || status === "To Do"
+                            ? "bg-slate-400"
+                            : status === "IN_PROGRESS" || status === "In Progress"
+                            ? "bg-indigo-500"
+                            : "bg-emerald-500"
+                        )}
+                      />
+                      {formatStatus(status)}
                     </span>
                   </SelectItem>
                 ))}
               </SelectGroup>
-              <SelectSeparator className="mt-2 h-[1px] bg-gray-300 dark:bg-darkSprint-30" />
+              <SelectSeparator className="my-1 h-[1px] bg-slate-100 dark:bg-surface-border-d" />
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   router.push("/workflow");
                 }}
-                className="w-full border py-4 pl-5 text-left text-sm font-medium hover:cursor-default hover:bg-gray-100 dark:border-darkSprint-30 dark:bg-darkSprint-20 dark:text-dark-50 dark:hover:bg-darkSprint-30"
+                className="w-full rounded-lg px-2.5 py-1.5 text-left text-xs font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-surface-overlay-d dark:text-slate-400 transition-colors"
               >
-                View Workflow
+                ⚙️ Configure Workflow
               </button>
             </SelectViewport>
           </SelectContent>

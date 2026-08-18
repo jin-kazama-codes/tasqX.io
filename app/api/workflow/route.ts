@@ -4,41 +4,43 @@ import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
+const DEFAULT_WORKFLOW = {
+  nodes: [
+    { id: "1", data: { label: "TODO" } },
+    { id: "2", data: { label: "IN_PROGRESS" } },
+    { id: "3", data: { label: "DONE" } },
+  ],
+  edges: [],
+};
+
 export async function GET(req: Request) {
   try {
-    const { id: projectId } = parseCookies(req, "project");
+    const projectCookie = parseCookies(req, "project");
+    const projectId = projectCookie?.id;
 
     if (!projectId) {
-      return NextResponse.json(
-        { error: "Project ID not found in cookies" },
-        { status: 400 }
-      );
+      return NextResponse.json({ workflow: DEFAULT_WORKFLOW }, { status: 200 });
     }
 
-    const workflow = await prisma.workflow.findUnique({
-      where: { projectId: projectId },
+    const workflowRecord = await prisma.workflow.findUnique({
+      where: { projectId: typeof projectId === "string" ? parseInt(projectId) : projectId },
     });
 
-    if (!workflow) {
-      return NextResponse.json(
-        { error: "Workflow not found for the given project ID" },
-        { status: 404 }
-      );
+    if (!workflowRecord || !workflowRecord.workflow) {
+      return NextResponse.json({ workflow: DEFAULT_WORKFLOW }, { status: 200 });
     }
 
-    return NextResponse.json({ workflow });
+    return NextResponse.json({ workflow: workflowRecord.workflow }, { status: 200 });
   } catch (error) {
     console.error("Error fetching workflow:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ workflow: DEFAULT_WORKFLOW }, { status: 200 });
   }
 }
 
 export async function PATCH(req: Request) {
   try {
-    const { id: projectId } = parseCookies(req, "project");
+    const projectCookie = parseCookies(req, "project");
+    const projectId = projectCookie?.id;
 
     if (!projectId) {
       return NextResponse.json(
@@ -47,7 +49,6 @@ export async function PATCH(req: Request) {
       );
     }
 
-    // Parse the request body
     const { nodes, edges } = await req.json();
 
     if (!nodes || !edges) {
@@ -57,11 +58,16 @@ export async function PATCH(req: Request) {
       );
     }
 
-    // Update the workflow in the database
-    const updatedWorkflow = await prisma.workflow.update({
-      where: { projectId },
-      data: {
-        workflow: { nodes, edges }, // Update with the provided nodes and edges
+    const numericProjectId = typeof projectId === "string" ? parseInt(projectId) : projectId;
+
+    const updatedWorkflow = await prisma.workflow.upsert({
+      where: { projectId: numericProjectId },
+      create: {
+        projectId: numericProjectId,
+        workflow: { nodes, edges },
+      },
+      update: {
+        workflow: { nodes, edges },
       },
     });
 

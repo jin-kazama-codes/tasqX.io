@@ -31,25 +31,33 @@ export const SelectedIssueProvider = ({
   const pathname = usePathname();
   const [issueKey, setIssueKey] = useState<IssueType["key"] | null>(null);
 
-  const setSelectedIssueUrl = useCallback(
-    (key: IssueType["key"] | null) => {
-      const urlWithQuery = pathname + (key ? `?selectedIssue=${key}` : "");
-      window.history.pushState(null, "", urlWithQuery);
+  // Sync state from URL query param only on initial load or back/forward
+  useEffect(() => {
+    const param = searchParams.get("selectedIssue");
+    setIssueKey((prev) => (prev !== param ? param : prev));
+  }, [searchParams]);
+
+  const handleSetIssueKey: React.Dispatch<
+    React.SetStateAction<IssueType["key"] | null>
+  > = useCallback(
+    (action) => {
+      setIssueKey((prev) => {
+        const next = typeof action === "function" ? action(prev) : action;
+        if (next !== prev && typeof window !== "undefined") {
+          const urlWithQuery =
+            pathname + (next ? `?selectedIssue=${next}` : "");
+          window.history.replaceState(null, "", urlWithQuery);
+        }
+        return next;
+      });
     },
     [pathname]
   );
 
-  useEffect(() => {
-    if (searchParams.get("selectedIssue"))
-      setIssueKey(searchParams.get("selectedIssue"));
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (searchParams.get("selectedIssue")) setSelectedIssueUrl(issueKey);
-  }, [issueKey, setSelectedIssueUrl]);
-
   return (
-    <SelectedIssueContext.Provider value={{ issueKey, setIssueKey }}>
+    <SelectedIssueContext.Provider
+      value={{ issueKey, setIssueKey: handleSetIssueKey }}
+    >
       {children}
     </SelectedIssueContext.Provider>
   );
