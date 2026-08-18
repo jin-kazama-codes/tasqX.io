@@ -90,29 +90,25 @@ const Issue: React.FC<{
           {...draggableProps}
           {...dragHandleProps}
           className={clsx(
+            "group flex w-full max-w-full items-center justify-between rounded-xl px-3 py-2 text-xs sm:text-sm transition-all duration-150",
             onChecked
-              ? "bg-gray-200 dark:bg-darkButton-20"
+              ? "bg-brand-50 dark:bg-brand-500/10 border-brand-300 dark:border-brand-500/40"
               : isDragging
-              ? "rounded-xl border-[0.3px] border-gray-300 bg-transparent"
-              : "border-[0.3px] border-slate-200 bg-slate-50 dark:border-darkButton-0 dark:bg-darkButton-30",
-            "group flex w-full max-w-full  items-center justify-between rounded-xl   px-3 py-1.5 text-sm hover:bg-gray-300 [&[data-state=selected]]:bg-transparent dark:[&[data-state=selected]]:bg-darkButton-20",
-            // Add Tailwind classes for border-bottom
-            "border-b-[0.3px]", // Border width
-            isDragging
-              ? "border-b-gray-300"
-              : "border-b-slate-200 dark:border-b-darkButton-0"
+              ? "rounded-xl border border-brand-400 bg-white/90 dark:bg-surface-raised-d shadow-lg"
+              : "border border-slate-200/70 dark:border-surface-border-d bg-white dark:bg-surface-raised-d hover:border-brand-300 dark:hover:border-brand-500/40 hover:bg-slate-50/60 dark:hover:bg-surface-overlay-d/40 shadow-2xs",
+            issueKey === issue.key && "!border-brand-500 !bg-brand-50/40 dark:!bg-brand-500/10 shadow-xs"
           )}
         >
           {isAdminOrManager && (
             <input
               type="checkbox"
               checked={onChecked}
-              onClick={(e) => e.stopPropagation()} // Prevent parent click event from triggering
+              onClick={(e) => e.stopPropagation()}
               onChange={(e) => {
-                e.stopPropagation(); // Prevent click event from propagating on checkbox change
+                e.stopPropagation();
                 onHandleCheck();
               }}
-              className="form-checkbox mr-3 h-3 w-3 rounded-sm"
+              className="form-checkbox mr-3 h-3.5 w-3.5 rounded accent-brand-500 cursor-pointer"
             />
           )}
           <div
@@ -125,9 +121,8 @@ const Issue: React.FC<{
               onSelect={handleSelectType}
             />
             <div
-              data-state={issue.status}
               className={clsx(
-                "whitespace-nowrap rounded-xl px-2 py-0.5 text-white",
+                "whitespace-nowrap rounded-lg px-2 py-0.5 text-[11px] font-mono font-extrabold tracking-wide text-white shadow-2xs",
                 issueKeyColorClass
               )}
             >
@@ -136,7 +131,7 @@ const Issue: React.FC<{
 
             <IssueTitle
               key={issue.id + issue.name}
-              className="truncate py-1.5 hover:cursor-pointer hover:underline dark:text-white"
+              className="truncate py-1 font-semibold text-slate-800 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
               isEditing={isEditing}
               setIsEditing={setIsEditing}
               issue={issue}

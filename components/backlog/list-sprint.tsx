@@ -218,23 +218,22 @@ const SprintListHeader: React.FC<{
               className="mr-2 text-xs text-black transition-transform dark:text-dark-50"
               aria-hidden
             />
-            <div className="flex items-center  gap-x-2">
-              <div className="text-semibold whitespace-nowrap text-xl dark:text-dark-50">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <div className="text-base font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
                 {sprint.name}
               </div>
-              <div className="flex items-center gap-x-3 whitespace-nowrap font-normal text-gray-800  dark:text-darkSprint-50">
-                <span>
-                  {getFormattedDateRange(sprint.startDate, sprint.endDate)}
-                </span>
-                <span className="dark:text-dark-50">
-                  ({issues.length ? issues.length : 0} {issues.length === 1 ? "task" : "tasks"})
+              <div className="flex items-center gap-2">
+                {sprint.startDate && sprint.endDate && (
+                  <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-surface-overlay-d px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                    {getFormattedDateRange(sprint.startDate, sprint.endDate)}
+                  </span>
+                )}
+                <span className="inline-flex items-center rounded-md bg-brand-50 dark:bg-brand-500/10 px-2 py-0.5 text-[11px] font-bold text-brand-600 dark:text-brand-400">
+                  {issues.length ? issues.length : 0} {issues.length === 1 ? "task" : "tasks"}
                 </span>
                 {convertedOriginalEstimate ? (
-                  <span className="dark:text-darkSprint-50">
-                    Estimate:{" "}
-                    <span className="text-md font-bold  dark:text-dark-50">
-                      {convertedOriginalEstimate}
-                    </span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    Est: <span className="font-bold text-slate-700 dark:text-slate-200">{convertedOriginalEstimate}</span>
                   </span>
                 ) : null}
               </div>
@@ -252,19 +251,21 @@ const SprintListHeader: React.FC<{
             >
               <DropdownTrigger
                 asChild
-                className="flex items-center gap-x-1 px-1.5 py-0.5 text-xs font-semibold focus:ring-2"
+                className="rounded-m flex items-center gap-x-2 bg-opacity-30 px-1.5 text-xs font-semibold focus:ring-2"
               >
-                <div className="rounded-full px-1.5 py-1.5 text-black hover:cursor-pointer hover:bg-gray-300 dark:text-dark-50 dark:hover:bg-darkSprint-40 [&[data-state=open]]:bg-gray-300 dark:[&[data-state=open]]:bg-darkSprint-40 ">
-                  <BsThreeDots className="sm:text-xl " />
-                </div>
+                <button aria-label="Sprint actions" className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-overlay-d hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                  <BsThreeDots className="h-4 w-4" />
+                </button>
               </DropdownTrigger>
             </SprintDropdownMenu>
           )}
         </div>
       </div>
-      <div className="pl-7 text-sm  font-medium text-gray-800 dark:text-darkSprint-50">
-        {sprint.description}
-      </div>
+      {sprint.description && (
+        <div className="pl-6 pt-1 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          {sprint.description}
+        </div>
+      )}
     </Fragment>
   );
 };

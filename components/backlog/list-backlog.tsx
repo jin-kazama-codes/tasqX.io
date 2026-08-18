@@ -72,19 +72,16 @@ const BacklogListHeader: React.FC<{ issues: IssueType[] }> = ({ issues }) => {
             className="mr-2 text-xs text-black transition-transform dark:text-dark-50"
             aria-hidden
           />
-          <div className="flex items-center gap-x-3">
-            <div className="text-semibold text-xl dark:text-dark-50">
+          <div className="flex items-center gap-3">
+            <div className="text-base font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
               Backlog
             </div>
-            <div className="ml-3 font-normal text-gray-800 dark:text-darkSprint-50">
-              ({issues.length ? issues.length : 0} {issues.length === 1 ? "task" : "tasks"})
-            </div>
+            <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-surface-overlay-d px-2 py-0.5 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+              {issues.length ? issues.length : 0} {issues.length === 1 ? "task" : "tasks"}
+            </span>
             {convertedOriginalEstimate ? (
-              <span className="dark:text-darkSprint-50">
-                Estimate:{" "}
-                <span className="text-md font-bold  dark:text-dark-50">
-                  {convertedOriginalEstimate}
-                </span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                Est: <span className="font-bold text-slate-700 dark:text-slate-200">{convertedOriginalEstimate}</span>
               </span>
             ) : null}
           </div>
