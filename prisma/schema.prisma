@@ -98,6 +98,13 @@ model Issue {
   comments       Comment[]
   estimateTime   String?
   timeSpent      String?
+  storyPoints    Int?
+  cost           Float?
+  budget         Float?
+  budgetTrack    String?
+  priority       String?
+  month          Int?
+  acceptanceCriteria String?
   Sprint         Sprint?     @relation(fields: [sprintId], references: [id])
 
   @@index([sprintId])
