@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const server = z.object({
   DATABASE_URL: z.string().min(1).default(
-    "postgresql://postgres:2412917@aAbB@db.puwoxwelsllgifqcsasg.supabase.co:5432/postgres"
+    "postgresql://postgres.puwoxwelsllgifqcsasg:2412917%40aAbB@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
   ),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
@@ -40,7 +40,7 @@ if (!process.env.SKIP_ENV_VALIDATION) {
     env = {
       DATABASE_URL:
         process.env.DATABASE_URL ||
-        "postgresql://postgres:2412917@aAbB@db.puwoxwelsllgifqcsasg.supabase.co:5432/postgres",
+        "postgresql://postgres.puwoxwelsllgifqcsasg:2412917%40aAbB@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true",
       NODE_ENV: process.env.NODE_ENV || "development",
       NEXT_PUBLIC_SUPABASE_URL:
         process.env.NEXT_PUBLIC_SUPABASE_URL ||
