@@ -1,6 +1,7 @@
 "use client";
+
 import { api } from "@/utils/api";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useUpdateIssue } from "./use-update-issue";
 import { useUpdateIssuesBatch } from "./use-update-batch";
 import { usePostIssue } from "./use-post-issue";
@@ -12,60 +13,49 @@ export const TOO_MANY_REQUESTS = {
 };
 
 export const useIssues = (sprintId?: string | null) => {
-  const sprintIden = sprintId !== null ? sprintId : "backlog";
+  const sprintKey = sprintId !== undefined ? (sprintId === null ? "backlog" : sprintId) : "all";
+
   const { data: issues, isLoading: issuesLoading } = useQuery(
-    ["issues", sprintIden], // Dynamic query key with sprintId
+    ["issues", sprintKey],
     ({ signal }) => {
-      // Extract sprintId from the query key
-      return getIssuesBySprintId({ signal }, sprintId); // Call API with sprintId
+      if (sprintId === undefined) {
+        return api.issues.getIssues({ signal });
+      }
+      return api.issues.getIssuesBySprintId({ signal }, sprintId);
     },
     {
-      enabled: !!sprintId, // Only fetch if sprintId is present
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // Cache for 10 minutes
-      retry: 1, // Retry only once if the query fails
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 10 * 60 * 1000,
+      retry: 1,
     }
   );
 
-  const getIssuesBySprintId = async (
-    { signal }: { signal: AbortSignal },
-    sprintId?: string | null
-  ) => {
-    const res = await api.issues.getIssuesBySprintId(
-      signal,
-      sprintId ?? sprintId
-    );
-    return res;
-    // return queryClient.getQueryData<IssueType[]>(["issues", sprintId]);
-  };
-
-  const getIssueCountBySprintId = (sprintId?: string | null) => {
+  const getIssueCountBySprintId = (targetSprintId?: string | null) => {
     return useQuery({
-      queryKey: [`${sprintId}-count`, sprintId], // Unique query key
-      queryFn: () => api.issues.getIssueCount(sprintId ?? sprintId), // Fetch issues or return an empty array for backlog
-      enabled: !!sprintId, // Prevent fetching if no sprintId is provided
-      staleTime: 5 * 60 * 1000, // Adjust as needed
-      cacheTime: 10 * 60 * 1000, // Adjust as needed
+      queryKey: [`${targetSprintId}-count`, targetSprintId],
+      queryFn: () => api.issues.getIssueCount(targetSprintId ?? targetSprintId),
+      enabled: !!targetSprintId,
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 10 * 60 * 1000,
     });
   };
 
-  const { updateIssuesBatch, batchUpdating } = useUpdateIssuesBatch(sprintIden);
-  const { updateIssue, isUpdating } = useUpdateIssue(sprintIden);
-  const { createIssue, isCreating } = usePostIssue(sprintIden);
-  const { deleteIssue, isDeleting } = useDeleteIssue(sprintIden);
+  const { updateIssuesBatch, batchUpdating } = useUpdateIssuesBatch(sprintKey);
+  const { updateIssue, isUpdating } = useUpdateIssue(sprintKey);
+  const { createIssue, isCreating } = usePostIssue(sprintKey);
+  const { deleteIssue, isDeleting } = useDeleteIssue(sprintKey);
 
   return {
     issues,
     issuesLoading,
     updateIssue,
     isUpdating,
-    updateIssuesBatch,
-    batchUpdating,
     createIssue,
     isCreating,
     deleteIssue,
     isDeleting,
-    getIssuesBySprintId,
+    updateIssuesBatch,
+    batchUpdating,
     getIssueCountBySprintId,
   };
 };
