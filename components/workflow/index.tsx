@@ -1,4 +1,5 @@
 "use client";
+
 import { useWorkflow } from "@/hooks/query-hooks/use-workflow";
 import { useCookie } from "@/hooks/use-cookie";
 import { recalculateEdges } from "@/utils/helpers";
@@ -11,6 +12,13 @@ import ReactFlow, {
   useEdgesState,
   applyNodeChanges,
 } from "reactflow";
+import {
+  HiOutlinePlus,
+  HiOutlineTrash,
+  HiOutlineCheck,
+  HiOutlineShare,
+  HiOutlineSparkles,
+} from "react-icons/hi2";
 
 import "reactflow/dist/style.css";
 
@@ -31,48 +39,65 @@ const Workflow = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [nodeId, setNodeId] = useState(1);
   const [nodeName, setNodeName] = useState("");
-  const [selectedNode, setSelectedNode] = useState(null); // Tracks the selected node
+  const [selectedNode, setSelectedNode] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
   const [hasAddedNode, setHasAddedNode] = useState(false);
-  const [editingNode, setEditingNode] = useState(null);
+  const [editingNode, setEditingNode] = useState<any>(null);
   const [editingName, setEditingName] = useState("");
+  const [originalEdges, setOriginalEdges] = useState<any[]>([]);
 
-  // Store the original edges to detect changes
-  const [originalEdges, setOriginalEdges] = useState([]);
-
-  // Handle the nodes change
-  const onNodesChange = (changes) => {
+  const onNodesChange = (changes: any) => {
     if (!isAdminOrManager) return;
     setNodes((nds) => {
-      const updatedNodes = applyNodeChanges(changes, nds); // Apply the node changes
-      recalculateEdges(updatedNodes, setEdges); // Recalculate edges after nodes are updated
+      const updatedNodes = applyNodeChanges(changes, nds);
+      recalculateEdges(updatedNodes, setEdges);
       return updatedNodes;
     });
   };
 
-  // Detect changes in edges
   const edgesHaveChanged =
     JSON.stringify(edges) !== JSON.stringify(originalEdges);
 
   useEffect(() => {
     if (workflow) {
-      const initialNodes = workflow.nodes.map((node) => ({
-        id: node.id,
-        position: node.position || { x: 0, y: 0 },
-        data: { label: node.data.label },
+      const rawNodes = workflow.nodes || [
+        { id: "1", position: { x: 50, y: 150 }, data: { label: "TODO" } },
+        { id: "2", position: { x: 300, y: 150 }, data: { label: "IN_PROGRESS" } },
+        { id: "3", position: { x: 550, y: 150 }, data: { label: "DONE" } },
+      ];
+      const rawEdges = workflow.edges || [
+        { id: "e1-2", source: "1", target: "2" },
+        { id: "e2-3", source: "2", target: "3" },
+      ];
+
+      const initialNodes = rawNodes.map((node: any, idx: number) => ({
+        id: String(node.id || idx + 1),
+        position: node.position || { x: idx * 250 + 50, y: 150 },
+        data: { label: node.data?.label || node.label || "Status" },
+        style: {
+          background: "#ffffff",
+          border: "1.5px solid #6366f1",
+          borderRadius: "12px",
+          padding: "10px 18px",
+          fontWeight: 700,
+          fontSize: "13px",
+          boxShadow: "0 4px 12px rgba(99, 102, 241, 0.12)",
+          color: "#0f172a",
+        },
       }));
-      const initialEdges = workflow.edges.map((edge) => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
+
+      const initialEdges = rawEdges.map((edge: any) => ({
+        id: edge.id || `e${edge.source}-${edge.target}`,
+        source: String(edge.source),
+        target: String(edge.target),
+        animated: true,
+        style: { stroke: "#6366f1", strokeWidth: 2 },
       }));
 
       setNodes(initialNodes);
       setEdges(initialEdges);
-      setOriginalEdges(initialEdges); // Store the initial edges
-
-      const maxNodeId = workflow.nodes.length;
-      setNodeId(maxNodeId + 1);
+      setOriginalEdges(initialEdges);
+      setNodeId(rawNodes.length + 1);
     }
   }, [workflow]);
 
@@ -89,8 +114,8 @@ const Workflow = () => {
     }));
     updateWorkflow({ nodes: nodesWithUpdatedIds, edges });
     setOriginalEdges(edges);
-    setSelectedNode(null); // Clear the selected node
-    setHasAddedNode(false); // Reset the "added node" state
+    setSelectedNode(null);
+    setHasAddedNode(false);
   };
 
   const handleAddNode = () => {
@@ -98,14 +123,24 @@ const Workflow = () => {
     if (nodeName.trim()) {
       const lastNode = nodes.length > 0 ? nodes[nodes.length - 1] : null;
       const newNodePosition = {
-        x: lastNode ? lastNode.position.x + 200 : Math.random() * 400, // Place 200px ahead of the last node
-        y: 50,
+        x: lastNode ? lastNode.position.x + 220 : 100,
+        y: 150,
       };
 
       const newNode = {
         id: `${nodeId}`,
         position: newNodePosition,
-        data: { label: nodeName },
+        data: { label: nodeName.trim().toUpperCase() },
+        style: {
+          background: "#ffffff",
+          border: "1.5px solid #6366f1",
+          borderRadius: "12px",
+          padding: "10px 18px",
+          fontWeight: 700,
+          fontSize: "13px",
+          boxShadow: "0 4px 12px rgba(99, 102, 241, 0.12)",
+          color: "#0f172a",
+        },
       };
       setNodes((nds) => [...nds, newNode]);
       setNodeId((id) => id + 1);
@@ -120,24 +155,23 @@ const Workflow = () => {
     setShowModal(false);
   };
 
-  const onNodeClick = (_, node) => {
+  const onNodeClick = (_: any, node: any) => {
     if (!isAdminOrManager) return;
     setSelectedNode(node);
   };
 
-  const onNodeDoubleClick = (_, node) => {
+  const onNodeDoubleClick = (_: any, node: any) => {
     if (!isAdminOrManager) return;
     setEditingNode(node);
     setEditingName(node.data.label);
   };
 
-  // Update node name
   const handleUpdateNodeName = () => {
     if (editingName.trim() && editingNode) {
       setNodes((nds) =>
         nds.map((node) =>
           node.id === editingNode.id
-            ? { ...node, data: { ...node.data, label: editingName.trim() } }
+            ? { ...node, data: { ...node.data, label: editingName.trim().toUpperCase() } }
             : node
         )
       );
@@ -149,10 +183,7 @@ const Workflow = () => {
 
   const deleteNode = () => {
     if (selectedNode && isAdminOrManager) {
-      // Remove the node from the nodes state
       setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
-
-      // Remove the corresponding edges that reference this node
       setEdges((eds) =>
         eds.filter(
           (edge) =>
@@ -160,63 +191,99 @@ const Workflow = () => {
         )
       );
 
-      // Automatically connect the neighbors of the deleted node
       const remainingNodes = nodes.filter(
         (node) => node.id !== selectedNode.id
       );
-      const updatedEdges = [];
+      const updatedEdges: any[] = [];
 
-      // Reconnect the remaining nodes
       remainingNodes.forEach((node, index) => {
         if (remainingNodes[index + 1]) {
           updatedEdges.push({
             id: `e${node.id}-${remainingNodes[index + 1].id}`,
             source: node.id,
             target: remainingNodes[index + 1].id,
+            animated: true,
+            style: { stroke: "#6366f1", strokeWidth: 2 },
           });
         }
       });
 
       setEdges(updatedEdges);
-      setSelectedNode(null); // Clear the selected node
-      setHasAddedNode(true); // Mark as updated
+      setSelectedNode(null);
+      setHasAddedNode(true);
     }
   };
 
-  if (isLoading) return <div>Loading...</div>;
-  if (isError)
-    return <div>Error: {error?.message || "Failed to load data"}</div>;
+  if (isLoading) {
+    return (
+      <div className="p-6 max-w-6xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="skeleton h-8 w-48 rounded-xl" />
+          <div className="skeleton h-10 w-32 rounded-xl" />
+        </div>
+        <div className="h-[75vh] w-full rounded-2xl border border-slate-200 dark:border-surface-border-d bg-white dark:bg-surface-raised-d shadow-card p-6 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+            <p className="text-xs font-semibold text-slate-500">Loading interactive workflow canvas…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex h-[90vh] flex-col">
-      {isAdminOrManager && (
-        <div className="flex items-center justify-between border-b border-gray-300 bg-gray-100 p-4 dark:border-none dark:bg-darkSprint-10">
-          <button
-            onClick={addNode}
-            className="rounded-md bg-button px-4 py-2 text-white hover:bg-buttonHover dark:bg-dark-0"
-          >
-            Add Workflow
-          </button>
-          {selectedNode && (
+    <div className="p-6 max-w-6xl mx-auto space-y-4">
+      {/* Header & Controls Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-500/10 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 border border-brand-500/20 shadow-xs">
+            <HiOutlineShare className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+              Project Workflow
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Configure task lifecycle stages and transitions
+            </p>
+          </div>
+        </div>
+
+        {isAdminOrManager && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={addNode}
+              className="btn-brand py-2 px-3.5 text-xs font-semibold inline-flex items-center gap-1.5"
+            >
+              <HiOutlinePlus className="h-4 w-4" />
+              <span>Add Stage</span>
+            </button>
+
+            {selectedNode && (
               <button
                 onClick={deleteNode}
-                className="rounded-md bg-red-500 px-4 py-2 text-white hover:bg-red-600"
+                className="flex items-center gap-1.5 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-100 transition-colors"
               >
-                Delete Node
+                <HiOutlineTrash className="h-4 w-4" />
+                <span>Delete Stage</span>
               </button>
             )}
-          {(edgesHaveChanged || hasAddedNode) && (
-            <button
-              onClick={updateFlow}
-              className="rounded-md bg-button px-4 py-2 text-white hover:bg-buttonHover"
-            >
-              Update Workflow
-            </button>
-          )}
-        </div>
-      )}
 
-      <div className="relative flex-1">
+            {(edgesHaveChanged || hasAddedNode) && (
+              <button
+                onClick={updateFlow}
+                className="flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-xs font-semibold shadow-md transition-colors animate-pulse"
+              >
+                <HiOutlineCheck className="h-4 w-4" />
+                <span>Save Workflow</span>
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Interactive Flow Canvas */}
+      <div className="h-[75vh] w-full rounded-2xl border border-slate-200/80 dark:border-surface-border-d bg-white dark:bg-surface-raised-d shadow-card overflow-hidden relative">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -227,64 +294,78 @@ const Workflow = () => {
           onNodeDoubleClick={onNodeDoubleClick}
           fitView
         >
-          <MiniMap />
-          <Controls />
-          <Background color="#aaa" gap={16} />
+          <MiniMap
+            nodeColor="#6366f1"
+            className="!rounded-xl !border !border-slate-200 dark:!border-surface-border-d !bg-white/80 dark:!bg-surface-raised-d/80 backdrop-blur-md !bottom-4 !right-4"
+          />
+          <Controls className="!rounded-xl !border !border-slate-200 dark:!border-surface-border-d !bg-white dark:!bg-surface-raised-d !shadow-md" />
+          <Background color="#6366f1" gap={20} size={1} className="opacity-20" />
         </ReactFlow>
       </div>
 
+      {/* Add Node Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center   bg-black bg-opacity-50">
-          <div className="rounded-md bg-white p-6 shadow-md dark:bg-darkSprint-20">
-            <h2 className="mb-4 text-lg font-semibold dark:text-dark-50">
-              Enter Node Name
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 dark:border-surface-border-d bg-white dark:bg-surface-raised-d p-6 shadow-modal space-y-4">
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              Add Workflow Stage
             </h2>
-            <input
-              type="text"
-              value={nodeName}
-              onChange={(e) => setNodeName(e.target.value)}
-              placeholder="Node Name"
-              className="mb-4 w-full rounded-md border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-darkSprint-20 dark:bg-darkSprint-30 dark:text-white dark:placeholder:text-darkSprint-50"
-            />
-            <div className="flex justify-end space-x-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                Stage Name
+              </label>
+              <input
+                type="text"
+                value={nodeName}
+                onChange={(e) => setNodeName(e.target.value)}
+                placeholder="e.g. CODE_REVIEW, TESTING"
+                className="input-field text-sm w-full uppercase"
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={handleCancel}
-                className="rounded-md bg-gray-300 px-4 py-2  hover:bg-gray-400"
+                className="btn-secondary py-2 px-3 text-xs"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddNode}
-                className="rounded-md bg-button px-4 py-2 text-white hover:bg-buttonHover dark:bg-dark-0"
+                className="btn-brand py-2 px-4 text-xs"
               >
-                Add Node
+                Add Stage
               </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Edit Node Modal */}
       {editingNode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="rounded-md bg-white p-6 shadow-md">
-            <h2 className="mb-4 text-lg font-semibold">Edit Node Name</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 dark:border-surface-border-d bg-white dark:bg-surface-raised-d p-6 shadow-modal space-y-4">
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              Edit Stage Name
+            </h2>
             <input
               type="text"
               value={editingName}
               onChange={(e) => setEditingName(e.target.value)}
-              placeholder="Node Name"
-              className="mb-4 w-full rounded-md border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Stage Name"
+              className="input-field text-sm w-full uppercase"
+              autoFocus
             />
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setEditingNode(null)}
-                className="rounded-md bg-gray-300 px-4 py-2 hover:bg-gray-400"
+                className="btn-secondary py-2 px-3 text-xs"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateNodeName}
-                className="rounded-md bg-button px-4 py-2 text-white hover:bg-buttonHover"
+                className="btn-brand py-2 px-4 text-xs"
               >
                 Update Name
               </button>
