@@ -73,6 +73,7 @@ const Board: React.FC = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const project = useCookie("project");
+  const user = useCookie("user");
 
   useEffect(() => {
     const projectId = project?.id;
