@@ -43,6 +43,14 @@ import { IssueIcon } from "../issue/issue-icon";
 import { useSelectedIssueContext } from "@/context/use-selected-issue-context";
 import { useWorkflow } from "@/hooks/query-hooks/use-workflow";
 import { Container } from "../ui/container";
+import Link from "next/link";
+import { StartSprintModal } from "@/components/modals/start-sprint";
+import {
+  HiOutlineViewColumns,
+  HiOutlineArrowRight,
+  HiOutlinePlay,
+} from "react-icons/hi2";
+import { getProjectKeyFromUrl } from "@/utils/helpers";
 
 const DEFAULT_STATUSES = ["TODO", "IN_PROGRESS", "DONE"];
 
@@ -113,10 +121,28 @@ const Board: React.FC = () => {
     sprints: filterSprints,
   } = useFiltersContext();
 
-  if (sprints?.length == 0) {
+  const projectKey = getProjectKeyFromUrl() || "SERA";
+  const firstPendingSprint = sprints?.find((sprint) => sprint.status === "PENDING") || sprints?.[0];
+
+  if (!sprints || sprints.length === 0) {
     return (
-      <Container className="flex h-full w-full items-center justify-center font-mono text-2xl dark:text-white">
-        <div>No sprints are available at the moment.</div>
+      <Container className="flex h-[75vh] w-full flex-col items-center justify-center p-6 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100 dark:bg-surface-raised-d border border-slate-200 dark:border-surface-border-d text-slate-400 mb-4 shadow-sm">
+          <HiOutlineViewColumns className="h-8 w-8" />
+        </div>
+        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+          No Sprints Created
+        </h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1.5 mb-6 leading-relaxed">
+          Create delivery sprints and schedule tasks in the Backlog to begin visualizing your project board.
+        </p>
+        <Link
+          href={`/${projectKey}/backlog`}
+          className="btn-brand py-2.5 px-5 text-xs font-semibold inline-flex items-center gap-2"
+        >
+          <span>Open Backlog</span>
+          <HiOutlineArrowRight className="h-4 w-4" />
+        </Link>
       </Container>
     );
   }
@@ -126,12 +152,44 @@ const Board: React.FC = () => {
     (sprint) => sprint.id === filterSprints[0]
   );
 
-  if (activeSprint === undefined || null)
+  if (!activeSprint) {
     return (
-      <Container className="flex h-full w-full items-center justify-center font-mono text-2xl dark:text-white">
-        <div>Start a sprint to access board</div>
+      <Container className="flex h-[75vh] w-full flex-col items-center justify-center p-6 text-center">
+        <div className="relative mb-5">
+          <div className="absolute -inset-2 rounded-full bg-brand-500/20 blur-xl animate-pulse pointer-events-none" />
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-500/10 dark:bg-brand-500/20 border border-brand-500/20 text-brand-600 dark:text-brand-400 shadow-glow-sm">
+            <HiOutlineViewColumns className="h-8 w-8" />
+          </div>
+        </div>
+
+        <h3 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+          No Active Sprint on Board
+        </h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mt-2 mb-6 leading-relaxed">
+          Kanban boards visualize tasks for an active sprint cycle. Start a scheduled sprint or navigate to the Backlog to plan deliverables across workflow stages.
+        </p>
+
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          {firstPendingSprint && (user?.role === "admin" || user?.role === "manager") && (
+            <StartSprintModal issueCount={0} sprint={firstPendingSprint}>
+              <button className="btn-brand py-2.5 px-5 text-xs font-semibold inline-flex items-center gap-2 shadow-glow-sm hover:shadow-glow transition-all">
+                <HiOutlinePlay className="h-4 w-4" />
+                <span>Start {firstPendingSprint.name}</span>
+              </button>
+            </StartSprintModal>
+          )}
+
+          <Link
+            href={`/${projectKey}/backlog`}
+            className="btn-secondary py-2.5 px-5 text-xs font-semibold inline-flex items-center gap-2"
+          >
+            <span>Go to Backlog</span>
+            <HiOutlineArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </Container>
     );
+  }
 
   const activeSprintId = filterSprints[0] ? filterSprints[0] : activeSprint.id;
 
