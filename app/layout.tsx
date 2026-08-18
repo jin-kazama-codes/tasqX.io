@@ -29,11 +29,11 @@ export const metadata: Metadata = {
   creator: "TasqX",
   icons: {
     icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
       { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/images/tasqx-logo.svg", type: "image/svg+xml" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico" },
     ],
-    shortcut: "/icon.svg",
+    shortcut: "/favicon.svg",
     apple: "/images/tasqx-logo.svg",
   },
   themeColor: "#6366F1",
@@ -73,7 +73,11 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
           href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
           rel="stylesheet"
         />
+        {/* Favicons */}
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+        <link rel="alternate icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/images/tasqx-logo.svg" />
       </head>
       <body className="overflow-hidden font-sans antialiased">
         <QueryProvider>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="tq-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="50%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+    <filter id="glow-sm" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="0.8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Rounded Squircle Base -->
+  <rect width="32" height="32" rx="8" fill="url(#tq-grad)"/>
+
+  <!-- Subtle Border Glow -->
+  <rect x="0.75" y="0.75" width="30.5" height="30.5" rx="7.25" fill="none" stroke="white" stroke-width="0.75" stroke-opacity="0.25"/>
+
+  <!-- Futuristic T-X Geometric Mark -->
+  <!-- Crossbar of T -->
+  <path d="M7 8.5C7 7.67 7.67 7 8.5 7H23.5C24.33 7 25 7.67 25 8.5V10C25 10.83 24.33 11.5 23.5 11.5H8.5C7.67 11.5 7 10.83 7 10V8.5Z" fill="#FFFFFF"/>
+  
+  <!-- Stem & Dynamic X / Checkmark Legs -->
+  <path d="M14 11.5H18C18.55 11.5 19 11.95 19 12.5V16L23.4 22.8C23.9 23.5 23.6 24.4 22.8 24.8L21.3 25.4C20.6 25.7 19.8 25.4 19.4 24.8L16 19.8L12.6 24.8C12.2 25.4 11.4 25.7 10.7 25.4L9.2 24.8C8.4 24.4 8.1 23.5 8.6 22.8L13 16V12.5C13 11.95 13.45 11.5 14 11.5Z" fill="#FFFFFF"/>
+
+  <!-- AI Pulse Sparkle Dot -->
+  <circle cx="24.5" cy="7.5" r="2" fill="#22D3EE" filter="url(#glow-sm)"/>
+  <circle cx="24.5" cy="7.5" r="1.1" fill="#FFFFFF"/>
+</svg>
