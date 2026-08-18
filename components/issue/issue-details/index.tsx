@@ -97,7 +97,7 @@ const IssueDetails: React.FC<{
     <div
       ref={renderContainerRef}
       data-state="open"
-      className="relative z-10 flex w-full flex-col rounded-2xl border border-slate-200/80 dark:border-surface-border-d bg-white dark:bg-surface-base-d shadow-card overflow-hidden"
+      className="relative z-10 flex w-full h-full flex-col rounded-2xl border border-slate-200/80 dark:border-surface-border-d bg-white dark:bg-surface-base-d shadow-card overflow-y-auto"
     >
       <IssueDetailsHeader
         detailPage={detailPage}
@@ -105,11 +105,13 @@ const IssueDetails: React.FC<{
         setIssueKey={setIssueKey}
         isInViewport={isInViewport}
       />
-      <IssueDetailsInfo
-        detailPage={detailPage}
-        issue={issue}
-        ref={viewportRef}
-      />
+      <div className="flex-1 overflow-y-auto">
+        <IssueDetailsInfo
+          detailPage={detailPage}
+          issue={issue}
+          ref={viewportRef}
+        />
+      </div>
     </div>
   );
 };

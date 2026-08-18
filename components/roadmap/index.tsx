@@ -1,5 +1,6 @@
 "use client";
-import React, { Fragment, useLayoutEffect, useRef } from "react";
+
+import React, { Fragment, useRef } from "react";
 import { useSelectedIssueContext } from "@/context/use-selected-issue-context";
 import "@/styles/split.css";
 import { RoadmapHeader } from "./header";
@@ -10,37 +11,37 @@ import { EpicsTable } from "./epics-table";
 import { useCookie } from "@/hooks/use-cookie";
 
 const Roadmap: React.FC = () => {
-  const { issueKey, setIssueKey } = useSelectedIssueContext();
-  const renderContainerRef = useRef<HTMLDivElement>(null);
-
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { issueKey } = useSelectedIssueContext();
   const project = useCookie("project");
-
-  useLayoutEffect(() => {
-    if (!renderContainerRef.current) return;
-    const calculatedHeight = renderContainerRef.current.offsetTop;
-    renderContainerRef.current.style.height = `calc(100vh - ${calculatedHeight}px)`;
-  }, []);
 
   if (!project) {
     return notFound();
   }
 
   return (
-    <Fragment>
+    <div className="flex h-full flex-col space-y-4">
       <RoadmapHeader project={project} />
-      <div ref={renderContainerRef} className="min-w-full max-w-max">
+
+      <div className="flex-1 w-full h-[calc(100vh-160px)] min-h-[500px]">
         <Split
-          sizes={issueKey ? [60, 40] : [100, 0]}
-          gutterSize={issueKey ? 2 : 0}
-          className="flex max-h-full w-full"
-          minSize={issueKey ? 400 : 0}
+          sizes={issueKey ? [62, 38] : [100, 0]}
+          gutterSize={issueKey ? 6 : 0}
+          className="flex h-full w-full gap-3 overflow-hidden"
+          minSize={issueKey ? 380 : 0}
         >
-          <EpicsTable />
-          <IssueDetails roadmap={true} issueKey={issueKey} />
+          <div className="h-full overflow-hidden flex-1">
+            <EpicsTable />
+          </div>
+          {issueKey ? (
+            <div className="h-full overflow-y-auto">
+              <IssueDetails roadmap={true} issueKey={issueKey} />
+            </div>
+          ) : (
+            <div />
+          )}
         </Split>
       </div>
-    </Fragment>
+    </div>
   );
 };
 
